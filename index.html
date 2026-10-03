@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>أرصدة الوحدات — تجميع تقارير المخازن</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--ink:#1d2a2a;--mute:#6b7775;--line:#e3ddd0;--brand:#0f5c4d;--brand2:#0b4438;--gold:#f2c94c;--grp:#e4efe9;--warn:#fff4d6;--warnb:#e0b43a;--bad:#b3261e;--ok:#1b7a4b;--tot:#f7f3e6}
+@media(prefers-color-scheme:dark){:root{--bg:#141a19;--card:#1c2423;--ink:#e8efed;--mute:#93a3a0;--line:#2c3937;--brand:#2fa58d;--brand2:#1f7c69;--grp:#23342f;--warn:#3a3218;--warnb:#a98a2c;--bad:#ff8a80;--ok:#5dd39e;--tot:#262d2b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.logo{flex-shrink:0;width:46px;height:46px;border-radius:12px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:22px}
+h1{margin:0;font-size:21px}header p{margin:0;color:var(--mute);font-size:13px}
+h2{font-size:16px;margin:22px 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.btn{font:inherit;border:0;border-radius:10px;padding:8px 15px;cursor:pointer;background:var(--brand);color:#fff;font-weight:600}
+.btn:hover{background:var(--brand2)}.btn.ghost{background:transparent;color:var(--brand);border:1px solid var(--brand)}.btn.ghost:hover{background:var(--grp)}
+.btn.sm{padding:3px 9px;font-size:12.5px;font-weight:500}.btn.danger{color:var(--bad);border-color:var(--bad)}.btn:disabled{opacity:.35;cursor:not-allowed}
+#drop{border:2px dashed var(--brand);border-radius:14px;padding:14px 16px;text-align:center;cursor:pointer;background:var(--card);transition:.2s;margin-bottom:14px}
+#drop.on,#drop:hover{background:var(--grp)}#drop b{display:block;font-size:16px}#drop span{color:var(--mute);font-size:13px}
+.units{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:8px}.units .card{padding:10px 12px}
+.unit{display:flex;flex-direction:column;gap:3px}
+.unit input{font:inherit;font-weight:700;font-size:15px;border:1px solid transparent;border-radius:8px;padding:3px 8px;background:transparent;color:var(--ink);width:100%}
+.unit input:hover,.unit input:focus{border-color:var(--line);background:var(--bg);outline:none}
+.unit small{color:var(--mute);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.unit .nums{display:flex;gap:14px;font-size:13px;flex-wrap:wrap}.unit .nums b{font-size:16px;font-variant-numeric:tabular-nums}
+.chk{font-size:12.5px;font-weight:600}.chk.ok{color:var(--ok)}.chk.bad{color:var(--bad)}.chk.na{color:var(--mute);font-weight:400}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.empty{padding:26px;text-align:center;color:var(--mute)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat small{color:var(--mute);display:block;font-size:12px}.stat strong{font-size:23px;font-variant-numeric:tabular-nums}
+.tools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:10px}
+.tools input[type=search],.tools input[type=text],.tools select{font:inherit;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+.tools input[type=search]{min-width:220px;flex:1}.tools input[type=text]{min-width:240px}
+.tools label{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--mute);cursor:pointer}
+.sp{flex:1}
+.note{background:var(--warn);border:1px solid var(--warnb);border-radius:12px;padding:10px 14px;margin:0 0 10px;font-size:13.5px}
+.note.err{border-color:var(--bad)}.note summary{cursor:pointer;font-weight:600}.note ul{margin:6px 0 0;padding-inline-start:20px}
+.tw{overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);max-height:75vh}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th{background:var(--gold);color:#1d2a2a;position:sticky;top:0;padding:9px 10px;font-weight:700;text-align:center;z-index:3;white-space:nowrap}
+td{padding:6px 10px;border-top:1px solid var(--line);text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap;background:var(--card)}
+td.nm{text-align:right;white-space:normal;min-width:260px}
+th.s1,td.s1{position:sticky;right:0;z-index:2}th.s1{z-index:4}
+td.z{color:var(--mute);opacity:.45}td.neg{color:var(--bad);font-weight:700}td.t{font-weight:700;background:var(--tot)}
+tr.g td{background:var(--grp);font-weight:700;border-top:1px solid var(--brand)}tr.g td.t{background:var(--grp)}
+tr.u td.nm::after{content:" ●";color:var(--warnb);font-size:11px}
+tr.u.ug td{background:var(--warn)}
+tr.gt td{background:var(--brand);color:#fff;font-weight:700;border-top:2px solid var(--brand2);position:sticky;bottom:0;z-index:2}
+tr:not(.g):not(.gt):hover td{filter:brightness(.97)}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:18px;width:min(520px,94vw)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h3{margin:0 0 4px}dialog p{margin:0 0 12px;color:var(--mute);font-size:13px}
+.pend{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}.pend label{font-size:12px;color:var(--mute);display:block}
+.pend input{font:inherit;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.row{display:flex;gap:8px;justify-content:flex-start}
+.hide{display:none!important}
+@media print{@page{size:landscape;margin:8mm}body{background:#fff;color:#000}.noprint{display:none!important}.tw{border:0;overflow:visible;max-height:none}th,td{position:static!important}th{-webkit-print-color-adjust:exact;print-color-adjust:exact}tr.g td,tr.gt td,td.t{-webkit-print-color-adjust:exact;print-color-adjust:exact}.wrap{padding:0}td,th{padding:3px 6px;font-size:11px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="noprint"><div class="logo">▦</div><div><h1>أرصدة الوحدات</h1><p>ارفع تقرير «رصيد الأصناف في المخازن» لكل وحدة، سمّها، وسيُجمَّع الرصيد في جدول واحد بترتيب القالب</p></div></header>
+
+<section class="noprint">
+<div id="drop" tabindex="0" role="button" aria-label="إضافة تقارير الوحدات"><b>⬆ اسحب تقارير الوحدات هنا أو اضغط للاختيار</b><span>يمكنك اختيار أكثر من ملف مرة واحدة (xls / xlsx) — المعالجة داخل المتصفح فقط</span>
+<input id="file" type="file" accept=".xls,.xlsx,.xlsm" multiple class="hide"></div>
+<div id="err" class="note err hide"></div>
+<div id="saveNote" class="note hide">تعذّر حفظ البيانات في المتصفح، لذلك ستبقى الوحدات حتى إغلاق هذه الصفحة فقط. صدّر ملف Excel قبل الإغلاق.</div>
+<div class="units" id="units"></div>
+</section>
+
+<section id="res" class="hide">
+<div class="stats noprint" id="stats"></div>
+<div id="warns" class="noprint"></div>
+<div class="tools noprint">
+<input type="search" id="q" placeholder="بحث بالاسم أو الكود…" aria-label="بحث">
+<label><input type="checkbox" id="hideZero" checked> إخفاء الأصناف بدون رصيد</label>
+<label>عند تكرار الكود:
+<select id="dupMode"><option value="sum">جمع الكميات</option><option value="first">أول قيمة فقط (مثل VLOOKUP)</option></select></label>
+<label><input type="checkbox" id="roundInt"> تقريب الكسور لأقرب كرتونة</label>
+</div>
+<div class="tools noprint"><input type="text" id="title" value="رصيد مخازن وحدات الشرقيه و دمياط" aria-label="عنوان التقرير (للتصدير)"><span class="sp"></span>
+<button class="btn ghost" id="print">طباعة</button>
+<button class="btn" id="export">تصدير Excel</button>
+</div>
+<div class="tw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+</section>
+</div>
+
+<dialog id="dlg"><h3>تسمية الوحدات</h3><p>اكتب اسم كل وحدة كما تريد أن يظهر في الجدول.</p><div class="pend" id="pend"></div>
+<div class="row"><button class="btn" id="dOk">إضافة</button><button class="btn ghost" id="dNo">إلغاء</button></div></dialog>
+
+<script>
+"use strict";
+const TPL = [{"g":"دوش 60 جم * 48","i":[["5001","دوش اسود 60 جم * 48"],["5002","دوش أصفر 60 جم * 48"],["5003","دوش روز 60 جم * 48"],["5004","دوش ازرق 60 جم * 48"],["5165","FLOWRAP دوش أبيض 60 جم * 48"],["5028","دوش مانجو 60 جم *48"]]},{"g":"BUNDLE 4 SP PRINT دوش 110 جم * 48","i":[["5119","BUNDLE 4 SP PRINT دوش أسود 110 جم * 48"],["5120","BUNDLE 4 SP PRINT دوش موف 110 جم * 48"],["5122","BUNDLE 4 SP PRINT دوش ازرق 110 جم * 48"],["5161","INT SP 4 BUNDLEدوش ابيض 110 جم * 48"],["5121","BUNDLE 4 SP PRINT دوش روز 110 جم * 48"]]},{"g":"ريفولى 110جم*48 BUNDLE 4 PR","i":[["5628","ريفولى روز 110جم*48 BUNDLE 4 PR"],["5629","ريفولى موف 110جم*48 BUNDLE 4 PR"],["5630","ريفولي أسود 110 جم * 48 BUNDLE 4 PR"],["5631","ريفولى ابيض 110جم*48 BUNDLE 4 PR"],["5632","ريفولى عود 110جم*48 BUNDLE 4 PR"]]},{"g":"BUNDLE 2 -ريفولي 165 جم * 24 عرض خاص","i":[["5608","BUNDLE 2 -ريفولي روز 165 جم * 24 عرض خاص"],["5609","BUNDLE 2 -ريفولي موف 165 جم * 24 عرض خاص"],["5610","BUNDLE 2 -ريفولي ابيض 165 جم * 24 عرض خاص"],["5611","BUNDLE 2 -ريفولي اسود 165 جم * 24 عرض خاص"]]},{"g":"باهى H.S","i":[["7705","باهى 50جم*24 H.S Lavender"],["7706","باهى 50جم*24 H.S flower breeze"],["7807","باهي 115 جم * 20 - H.S Lavender"],["7808","باهي 115 جم * 20- H.S flower breeze"],["7754","باهي 160 جم * 8 - H.S Lavender"],["7709","باهي 185 جم * 8 - H.S LAVENDER-NEW"],["7710","باهى 185 جم* 8 H.S flower breeze"],["7711","باهى 265 جم*8 H.S Lavender"],["7712","باهى 265 جم* 8 H.S flower breeze"],["7809","باهي 350 جم * 8 - H.S Lavender-NEW"],["7810","باهي 350 جم * 8 - H.S flower breeze"],["7758","باهي 360 جم * 6 - H.S Lavender"],["7811","باهي 435 جم * 6 - H.S LAVENDER"],["7812","باهي 435 جم * 6 - H.S Flowe"],["7605","باهي 1 كجم * 6 - H.S LAVENDER"],["7606","باهي 1 كجم * 6 - H.S flower breeze"],["7049","باهي 1500 جم * 4 - H.S LAVENDER new"],["7448","باهي 1.5 كجم * 4 - H.S flower breez"],["7449","باهي 2 كجم * 4 - H.S flower breeze"],["7059","باهى 2 كجم * 4 lavender H.S"]]},{"g":"باهى -L.S","i":[["6920","باهى 2.5 كجم +300 جم*4-L.S Lavender"],["7450","باهي 2500 جم+ 300 جم * 4 - L.S flower br"],["6922","باهى 4 كجم + 500جم*3-L.S Lavender"],["7451","باهي 4000 جم+ 500 جم * 3 - L.S flower bre"],["6924","باهى 8 كجم + 1كجم*2-L.S Lavender"],["7452","باهي 8 كجم+ 1 كجم * 2 - L.S flower bree"]]},{"g":"باهي H.S GEL Black ST UP","i":[["7522","باهي 35 جم * 36 - H.S GEL Lavender"],["7525","باهي 35 جم * 36 - H.S GEL Black"],["7763","باهي 30 جم * 48 - H.S GEL Black"],["7761","باهي 60 جم * 36 - H.S GEL Lavender"],["7764","باهي 60 جم * 36 - H.S GEL Black"],["7523","باهي 90 جم * 18 - H.S GEL Lavender"],["7526","باهي 90 جم * 18 - H.S GEL Black"],["7524","باهى 190 جم*12 H.S GEL Lavender"]]},{"g":"","i":[["7322","اوكسى جيل 50 جم *36 لافندر"],["7326","اوكسى جيل 90 جم *18 لافندر"],["7330","اوكسى جيل 185 جم *12 لافندر"],["6589","GEL LAVENDER - أوكسي 3 كجم * 4 - L.S"]]},{"g":"","i":[["7517","اوكسى 50جم*32- H .S ORIENTAL"],["7520","اوكسى 110جم*24- H .S ORIENTAL"],["7521","اوكسى110جم*24- H .S LAVENDER"],["9019","أوكسي 110 جم * 16 - H.S Oriental NEW"],["6115","أوكسي 1 كجم * 6 - H.S SPRING"],["6225","L.S SPRIN-2* FREE أوكسي 8 كجم + 1 كجم"],["6991","أوكسي 1500 جم * 4 - H.S Orienta"],["7345","أوكسي 1 كجم * 6 - H.S Oriental"],["7058","أوكسي 2 كجم * 4 - H.S LAVENDER NEW"],["7518","اوكسى 50جم*32- H .S LAVENDER"],["6989","أوكسي 1500 جم * 4 - H.S Spring"],["9023","أوكسي 175 جم * 12 - H.S LAVENDER"],["9022","أوكسي 175 جم * 12 - H.S ORIENTAL"],["7334","اوكسى جيل عادى 290 جم * 8 لافندر"],["8488","بريكس كلور إلوان - BLUE 950 مل * 12"]]},{"g":"وفير ليمون 40جم *48 ساشيه","i":[["8205","وفير ليمون اخضر 40جم *48 ساشيه"],["8206","وفير ليمون اصفر 40جم *48 ساشيه"]]},{"g":"DWL - وفير ليمون 725 جم * 12","i":[["8272","DWL - وفير ليمون أخضر 725 جم * 12"],["8273","DWL - وفير ليمون أصفر 725 جم * 12"]]},{"g":"DWL- وفير ليمون 690 جم *12","i":[["9461","DWL- وفير ليمون أخضر 690 جم *12"],["9462","DWL- وفير ليمون اصفر 690 جم *12"]]},{"g":"DWL New Shape - وفير ليمون 4 كجم *4","i":[["8338","DWL New Shape - وفير ليمون أخضر 4 كجم * 4"],["8337","DWL New Shape - وفير ليمون أصفر 4 كجم *4"]]},{"g":"برايت ليمون كجم *1- DWL","i":[["8374","برايت هاند ووش فواكه 5 كجم*4"],["8370","برايت ليمون أخضر 10 كجم *1- DWL"],["8371","برايت ليمون أصفر 10 كجم *1- DWL"],["8373","برايت ليمون أصفر 20 كجم *1- DWL"],["8372","برايت ليمون أخضر 20 كجم *1- DWL"],["8958","برايت منظف و مطهر لألسطح المتعددة 5كجم*4"],["8957","برايت منظف متعدد االغراض بدون رائحة10كجم"],["8990","برايت منظف متعدد االغراض بدون رائحة20كجم"]]},{"g":"دوش هاند ووش 450 مل * 12","i":[["8803","دوش موف هاند ووش 450 مل * 12"],["8804","دوش أسود هاند ووش 450 مل * 12"],["8805","دوش أبيض هاند ووش 450 مل * 12"],["8819","دوش روز هاند ووش 450 مل * 12"],["8890","%دوش روز هاند وش+450موف ش.ج600مل*6×2"],["8891","%دوش موف هاند وش+450أبيض ش.ج600م*6×2"],["8892","%دوش أبيض هاند وش+450أسود ش.ج600*6×2"],["8893","%دوش أسود هاند وش+450روز ش.ج600م*6×2"]]},{"g":"","i":[["8970","pouch UP.STدوش موف هاند ووش 350 مل * 12"],["8971","Pouch UP.STدوش أسود هاند ووش 350 مل *12"]]},{"g":"SP ED ريفولي هاند وش 450 ملي * 12","i":[["8663","SP ED ريفولي عود هاند وش 450 ملي * 12"],["8664","SP ED ريفولي أبيض هاند وش 450 ملي * 12"],["8661","SP ED ريفولي روز هاند وش 450 ملي * 12"],["8660","SP ED ريفولي موف هاند وش 450 ملي * 12"],["8636","ريفولي عود هاند وش 500 ملي * 12"],["8882","ريفولي ستار هاند وش 450 مل* 12"],["8662","SP ED ريفولي أسود هاند وش 450 ملي * 12"]]},{"g":"دوش شاور جل 30 جم * 60 ساشيه","i":[["8800","دوش موف شاور جل 30 جم * 60 ساشيه"],["8801","دوش أسود شاور جل 30 جم * 60 ساشيه"]]},{"g":"دوش شاور جل 350 مل* 12 Spout sachet","i":[["8822","دوش أسود شاور جل 350 مل* 12 Spout sachet"],["8823","دوش موف شاور جل 350 مل* 12 Spout sachet"],["8824","دوش روز شاور جل 350 مل* 12 Spout sachet"]]},{"g":"دوش شاور جل 600 مل * 12","i":[["8806","دوش موف شاور جل 600 مل * 12"],["8807","دوش أسود شاور جل 600 مل * 12"],["8808","دوش أبيض شاور جل 600 مل * 12"],["8820","دوش روز شاور جل 600 مل * 12"]]},{"g":"دوش شاور جل 1 لتر * 12","i":[["8809","دوش موف شاور جل 1 لتر * 12"],["8810","دوش أسود شاور جل 1 لتر * 12"],["8811","دوش أبيض شاور جل 1 لتر * 12"],["8821","دوش روز شاور جل 1 لتر * 12"]]},{"g":"دوش شاور جل 1.8 لتر * 4","i":[["8814","دوش أسود شاور جل 1.8 لتر * 4"],["8815","دوش موف شاور جل 1.8 لتر * 4"],["8816","دوش روز شاور جل 1.8 لتر * 4"],["8817","دوش أبيض شاور جل 1.8 لتر * 4"]]},{"g":"ريفولي شاور جل 45 جم * 50 ساشيه","i":[["8828","ريفولي عود شاور جل 45 جم * 50 ساشيه"],["8826","ريفولي موف شاور جل 45 جم * 50 ساشيه"],["8827","ريفولي أسود شاور جل 45 جم * 50 ساشيه"],["8829","ريفولي روز شاور جل 45 جم * 50 ساشيه"]]},{"g":"ريفولي شاور جل 500 ملي * 12","i":[["8549","ريفولي عود شاور جل 500 ملي * 12"],["8550","ريفولي روز شاور جل 500 ملي * 12"],["8551","ريفولي أسود شاور جل 500 ملي * 12"],["8548","ريفولي موف شاور جل 500 ملي * 12"],["8558","ريفولي أبيض شاور جل 500 ملي * 12"]]},{"g":"Pريفولي شاورجل500مل (عود+موف+لوفة)*6","i":[["9139","Pريفولي شاورجل500مل (ابيض+موف+لوفة)*6"],["9140","Pريفولي شاورجل500مل (روز+اسود+لوفة)*6"],["9150","Pريفولي شاورجل500مل (اسود+ستار+لوفة)*6"],["9138","Pريفولي شاورجل500مل (عود+موف+لوفة)*6"]]},{"g":"SP ED ريفولي شاور جل 1 لتر * 12","i":[["8516","SP ED ريفولي شاور جل موف 1 لتر * 12"],["8518","SP ED ريفولي شاور جل روز 1 لتر * 12"],["8519","SP ED ريفولي شاور جل اسود 1 لتر * 12"],["8547","ريفولي شاور جل عود 1 لتر *SP ED12"],["8881","ريفولي ستار شاور جل 1 لتر* 12"],["8559","SP ED ريفولي أبيض شاور جل 1 لتر * 12"]]},{"g":"ريفولي شاور جل 2 لتر * 4","i":[["8552","ريفولي موف شاور جل 2 لتر * 4"],["8554","ريفولي روز شاور جل 2 لتر * 4"],["8555","ريفولي أسود شاور جل 2 لتر * 4"],["8560","ريفولي أبيض شاور جل 2 لتر * 4"]]},{"g":"SP ED ريفولي شاور جل 3 لتر * 4","i":[["8656","SP ED ريفولي موف شاور جل 3 لتر * 4"],["8657","SP ED ريفولي روز شاور جل 3 لتر * 4"],["8658","SP ED ريفولي أسود شاور جل 3 لتر * 4"],["8659","SP ED ريفولي أبيض شاور جل 3 لتر * 4"]]},{"g":"Profre كير د. كلين هاند ووش مل* 12","i":[["5712","Profresh صابون كير د. كلين روز 85 جم* 48"],["5710","ice Fresh صابون كير د. كلين أخضر 85 جم* 48"],["8609","ice Fr كير د. كلين أخضر هاند ووش 200 مل* 12"],["8610","blue M كير د. كلين أزرق هاند ووش 200 مل* 12"],["8617","Ice Fr كير د. كلين أخضر هاند ووش 450 مل* 12"],["8618","Blue M كير د. كلين أزرق هاند ووش 450 مل* 12"],["8619","Profre كير د. كلين روز هاند ووش 450 مل* 12"]]},{"g":"6BUN -جوي شامبو 200 مل* 12","i":[["8720","6BUN -جوي شامبو شاي أخضر&جنزبيل 200 مل* 12"],["8721","6BUN -جوي شامبو افوكادو&لوز حلو 200 مل* 12"],["8722","6BUN -جوي شامبو صبار&جوجوبا 200 مل* 12"],["8724","6BUN -جوي شامبو جوز هند&روزماري 200 مل* 12"],["8725","6BUN -جوي شامبو عسل&وزيت ارجان 200 مل* 12"]]},{"g":"6BUN -جوي شامبو 350 مل* 12","i":[["8726","6BUN -جوي شامبو شاي أخضر&جنزبيل 350 مل* 12"],["8727","6BUN -جوي شامبو افوكادو&لوز حلو 350 مل* 12"],["8728","6BUN -جوي شامبو صبار&جوجوبا 350 مل* 12"],["8729","6BUN -جوي شامبو زبدة.ش يا&ز.زيتون 350 مل* 12"],["8730","6BUN -جوي شامبو جوز هند&روزماري 350 مل* 12"],["8731","6BUN -جوي شامبو عسل&ارجان 350 مل* 12"]]},{"g":"6BUN -جوي بلسم 200 مل* 12","i":[["8738","6BUN -جوي بلسم شاي أخضر&جنزبيل 200 مل* 12"],["8740","6BUN -جوي بلسم صبار&جوجوبا 200 مل* 12"],["8741","6BUN -جوي بلسم ز.ش يا&ز.زيتون 200 مل* 12"],["8743","6BUN -جوي بلسم عسل&ارجان 200 مل* 12"]]},{"g":"6BUN -جوي بلسم 350 مل* 12","i":[["8744","6BUN -جوي بلسم شاي أخضر&جنزبيل 350 مل* 12"],["8745","6BUN -جوي بلسم افوكادو&لوز حلو 350 مل* 12"],["8746","6BUN -جوي بلسم صبار&جوجوبا 350 مل* 12"],["8747","6BUN -جوي بلسم ز.ش يا&ز.زيتون 350 مل* 12"]]}]; // [{g:اسم المجموعة, i:[[كود,اسم]]}]
+const KEY = 'wh_units_v1';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm = v => String(v??'').trim().replace(/\.0+$/,'');
+const isNum = v => typeof v==='number' ? isFinite(v) : (typeof v==='string' && v.trim()!=='' && isFinite(+v.replace(/,/g,'')));
+const toNum = v => typeof v==='number' ? v : +String(v).replace(/,/g,'');
+const CODE = /^\d{3,6}$/;
+const TPLCODES = new Set(TPL.flatMap(b=>b.i.map(x=>x[0])));
+let units = [];      // [{id,name,file,at,rows:[[code,qty,name]],total}]
+let storageOK = true;
+
+/* ---------- حفظ/استرجاع ---------- */
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(units)); $('saveNote').classList.add('hide'); }catch(e){ storageOK=false; $('saveNote').classList.remove('hide'); } }
+function restore(){ try{ const s = localStorage.getItem(KEY); if(s) units = JSON.parse(s); }catch(e){ units=[]; storageOK=false; $('saveNote').classList.remove('hide'); } }
+
+/* ---------- قراءة تقرير ---------- */
+function parseReport(rows){
+  // الشكل (أ): التقرير الأصلي — [..., كرتونة, ..., اسم, كود]  (الكرتونة قبل الاسم بخانة، والكود في الآخر)
+  // الشكل (ب): شيت مُجهّز — [كود, كرتونة, اسم]
+  const sa = {}; let sb = 0;
+  rows.forEach(r=>{
+    r.forEach((c,j)=>{ if(j>=2 && CODE.test(norm(c)) && typeof r[j-1]==='string' && r[j-1].trim() && isNum(r[j-2])) sa[j]=(sa[j]||0)+1; });
+    if(CODE.test(norm(r[0])) && isNum(r[1]) && typeof r[2]==='string') sb++;
+  });
+  const ca = +Object.keys(sa).sort((a,b)=>sa[b]-sa[a])[0] || 0, na = ca ? sa[ca] : 0;
+  const out = []; let total = null;
+  if(na >= sb && na > 0){
+    rows.forEach(r=>{
+      const name = r[ca-1], code = norm(r[ca]);
+      if(typeof name==='string' && name.includes('الاجمالي') && !code && isNum(r[ca-2])){ total = toNum(r[ca-2]); return; }
+      if(CODE.test(code) && typeof name==='string' && isNum(r[ca-2])) out.push([code, toNum(r[ca-2]), name.replace(/\s+/g,' ').trim()]);
+    });
+  } else if(sb > 0){
+    rows.forEach(r=>{ if(CODE.test(norm(r[0])) && isNum(r[1])) out.push([norm(r[0]), toNum(r[1]), String(r[2]??'').replace(/\s+/g,' ').trim()]); });
+  }
+  if(!out.length) throw new Error('لم أجد أصنافاً في الملف. تأكد أنه تقرير «رصيد الأصناف في المخازن».');
+  return {rows:out, total};
+}
+async function readFile(file){
+  if(typeof XLSX==='undefined') throw new Error('تعذر تحميل مكتبة القراءة. تأكد من الاتصال بالإنترنت ثم أعد فتح الصفحة.');
+  const wb = XLSX.read(await file.arrayBuffer(), {type:'array'});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  return parseReport(XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true}));
+}
+
+/* ---------- الحساب ---------- */
+const opts = () => ({dup:$('dupMode').value, int:$('roundInt').checked});
+const rnd = (v,o) => { if(o.int) return Math.round(v); const r = Math.round(v*100)/100; return Math.abs(r)<0.005 ? 0 : r; };
+function agg(u,mode){ // code -> raw qty (بدون تقريب)
+  const m = new Map();
+  u.rows.forEach(([c,q])=>{ if(mode==='first'){ if(!m.has(c)) m.set(c,q); } else m.set(c,(m.get(c)||0)+q); });
+  return m;
+}
+function compute(all){
+  const o = opts(), maps = units.map(u=>agg(u,o.dup));
+  const val = (ui,c) => rnd(maps[ui].get(c)||0, o);
+  const names = new Map(); units.forEach(u=>u.rows.forEach(([c,,n])=>{ if(!names.has(c)) names.set(c,n); }));
+  const mk = (code,name,unlisted) => { const v = units.map((_,i)=>val(i,code)); return {code,name,v,t:v.reduce((a,b)=>a+b,0),unlisted}; };
+  const groups = TPL.map((b,k)=>({g:b.g||'مجموع المجموعة', items:b.i.map(([c,n])=>mk(c,n,false))}));
+  const extra = [...names.keys()].filter(c=>!TPLCODES.has(c)).sort((a,b)=>a-b).map(c=>mk(c,names.get(c),true)).filter(r=>all || r.v.some(x=>x!==0) || !$('hideZero').checked);
+  if(extra.length) groups.push({g:'أصناف غير مدرجة في القالب', items:extra, extra:true});
+  groups.forEach(g=>{ g.v = units.map((_,i)=>g.items.reduce((s,r)=>s+r.v[i],0)); g.t = g.v.reduce((a,b)=>a+b,0); });
+  const grand = units.map((_,i)=>groups.reduce((s,g)=>s+g.v[i],0));
+  return {o,maps,groups,grand,gt:grand.reduce((a,b)=>a+b,0)};
+}
+function visible(C){
+  const hz = $('hideZero').checked, q = $('q').value.trim().toLowerCase();
+  const out = [];
+  C.groups.forEach(g=>{
+    let rows = g.items.filter(r => (!hz || r.v.some(x=>x!==0)) && (!q || r.code.includes(q) || r.name.toLowerCase().includes(q) || g.g.toLowerCase().includes(q)));
+    if(rows.length) out.push({...g, rows});
+  });
+  return out;
+}
+
+/* ---------- العرض ---------- */
+const fmt = n => n===0 ? '–' : n.toLocaleString('en-US',{maximumFractionDigits:2});
+const cell = v => `<td class="${v===0?'z':v<0?'neg':''}">${fmt(v)}</td>`;
+function renderUnits(){
+  $('units').innerHTML = units.length ? units.map((u,i)=>{
+    const m = agg(u,'sum'), raw = [...m.values()].reduce((a,b)=>a+b,0), n = [...m.values()].filter(x=>Math.abs(x)>=0.005).length;
+    const chk = u.total==null ? ''
+      : Math.abs(u.total-raw)<0.5 ? `<span class="chk ok">✓ مطابق لإجمالي التقرير (${raw.toLocaleString('en-US',{maximumFractionDigits:2})})</span>`
+      : `<span class="chk bad">✗ إجمالي التقرير ${u.total.toLocaleString('en-US')} والمقروء ${raw.toLocaleString('en-US',{maximumFractionDigits:2})}</span>`;
+    return `<div class="card unit"><input value="${esc(u.name)}" data-id="${u.id}" aria-label="اسم الوحدة" maxlength="60">
+      <small>${esc(u.file)} · ${new Date(u.at).toLocaleDateString('en-GB')}</small>
+      <div class="nums"><span>أصناف برصيد <b>${n}</b></span><span>الإجمالي <b>${raw.toLocaleString('en-US',{maximumFractionDigits:0})}</b></span></div>${chk}
+      <div class="acts"><button class="btn ghost sm" data-a="repl" data-id="${u.id}">استبدال الملف</button>
+      <button class="btn ghost sm" data-a="l" data-id="${u.id}" ${i===units.length-1?'disabled':''} title="تحريك لليسار">←</button>
+      <button class="btn ghost sm" data-a="r" data-id="${u.id}" ${i===0?'disabled':''} title="تحريك لليمين">→</button>
+      <button class="btn ghost sm danger" data-a="del" data-id="${u.id}">حذف</button></div></div>`;
+  }).join('') : '<div class="card empty" style="grid-column:1/-1">لم تُضف أي وحدة بعد. ارفع تقرير الوحدة الأولى للبدء.</div>';
+}
+function render(){
+  renderUnits();
+  $('res').classList.toggle('hide', !units.length);
+  if(!units.length) return;
+  const C = compute(), vis = visible(C), n = units.length;
+  $('th').innerHTML = `<tr><th class="s1" style="min-width:90px">الكود</th><th>الصنف</th>${units.map(u=>`<th>${esc(u.name)}</th>`).join('')}<th>اجمالي الرصيد</th></tr>`;
+  let h = '';
+  vis.forEach(g=>{
+    g.rows.forEach(r=>{ h += `<tr class="${r.unlisted?'u':''}"><td class="s1">${r.code}</td><td class="nm">${esc(r.name)}</td>${r.v.map(cell).join('')}<td class="t ${r.t<0?'neg':r.t===0?'z':''}">${fmt(r.t)}</td></tr>`; });
+    h += `<tr class="g"><td class="s1"></td><td class="nm">${esc(g.g)}</td>${g.v.map(cell).join('')}<td class="t">${fmt(g.t)}</td></tr>`;
+  });
+  if(!vis.length) h = `<tr><td colspan="${n+3}" class="empty">لا توجد نتائج</td></tr>`;
+  else h += `<tr class="gt"><td class="s1"></td><td class="nm">الإجمالي العام</td>${C.grand.map(v=>`<td>${fmt(v)}</td>`).join('')}<td>${fmt(C.gt)}</td></tr>`;
+  $('tb').innerHTML = h;
+
+  const withBal = C.groups.reduce((s,g)=>s+g.items.filter(r=>r.v.some(x=>x!==0)).length,0);
+  const un = C.groups.find(g=>g.extra), unBal = un ? un.items.filter(r=>r.v.some(x=>x!==0)) : [];
+  $('stats').innerHTML = `
+    <div class="card stat"><small>عدد الوحدات</small><strong>${n}</strong></div>
+    <div class="card stat"><small>أصناف لها رصيد</small><strong>${withBal}</strong></div>
+    <div class="card stat"><small>إجمالي الكراتين</small><strong>${C.gt.toLocaleString('en-US',{maximumFractionDigits:0})}</strong></div>
+    <div class="card stat"><small>أصناف خارج القالب</small><strong>${unBal.length}</strong></div>`;
+
+  // التحذيرات
+  let w = '';
+  if(unBal.length) w += `<details class="note"><summary>${unBal.length} صنف له رصيد وغير موجود في القالب (إجمالي ${unBal.reduce((s,r)=>s+r.t,0).toLocaleString('en-US',{maximumFractionDigits:0})} كرتونة)</summary>
+    تمت إضافتهم في آخر الجدول تحت «أصناف غير مدرجة في القالب» وداخلون في الإجمالي العام، حتى لا يضيع رصيدهم. (مُعلَّمون بنقطة ●)</details>`;
+  const dups = [];
+  units.forEach(u=>{ const by = {}; u.rows.forEach(([c,q,nm])=>{ (by[c] = by[c]||{nm,q:[]}).q.push(q); }); Object.entries(by).forEach(([c,d])=>{ if(d.q.length>1) dups.push({u:u.name,c,nm:d.nm,q:d.q}); }); });
+  if(dups.length) w += `<details class="note"><summary>${dups.length} كود مكرر داخل التقارير — الوضع الحالي: ${C.o.dup==='sum'?'جمع الكميات':'أول قيمة فقط'}</summary><ul>${dups.map(d=>`<li>${esc(d.u)} — ${esc(d.nm)} (${d.c}): ${d.q.map(x=>x.toLocaleString('en-US',{maximumFractionDigits:2})).join(' ، ')}</li>`).join('')}</ul>
+    <div style="margin-top:6px">VLOOKUP في Excel ياخد أول قيمة فقط، فيظهر الرصيد أقل من الحقيقي. غيّر الوضع من القائمة أعلاه إذا كان التكرار نسخاً بالخطأ.</div></details>`;
+  const bad = units.filter(u=>{ if(u.total==null) return false; const raw=[...agg(u,'sum').values()].reduce((a,b)=>a+b,0); return Math.abs(u.total-raw)>=0.5; });
+  if(bad.length) w += `<div class="note err">لا يطابق مجموع الأصناف المقروءة إجمالي التقرير في: ${bad.map(u=>esc(u.name)).join('، ')}. راجع الملف المرفوع.</div>`;
+  $('warns').innerHTML = w;
+}
+
+/* ---------- إضافة / تعديل الوحدات ---------- */
+let pending = [], replaceId = null;
+const baseName = f => f.replace(/\.[^.]+$/,'').replace(/[_]+/g,' ').trim();
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function showErr(m){ $('err').textContent = m; $('err').classList.remove('hide'); }
+async function handleFiles(files){
+  $('err').classList.add('hide'); const ok = [], bad = [];
+  for(const f of files){ try{ ok.push({file:f.name, ...(await readFile(f))}); }catch(e){ bad.push(f.name+': '+e.message); } }
+  if(bad.length) showErr(bad.join(' | '));
+  if(!ok.length) return;
+  if(replaceId){ const u = units.find(x=>x.id===replaceId); replaceId=null;
+    if(u){ Object.assign(u,{file:ok[0].file,at:Date.now(),rows:ok[0].rows,total:ok[0].total}); save(); render(); } return; }
+  pending = ok; $('pend').innerHTML = ok.map((p,i)=>`<div><label>${esc(p.file)} — ${p.rows.length} صنف</label><input data-p="${i}" value="${esc(baseName(p.file))}" maxlength="60"></div>`).join('');
+  $('dlg').showModal(); $('pend').querySelector('input').select();
+}
+function confirmAdd(){
+  $('pend').querySelectorAll('input').forEach(inp=>{ const p = pending[+inp.dataset.p];
+    units.push({id:uid(), name:inp.value.trim()||baseName(p.file), file:p.file, at:Date.now(), rows:p.rows, total:p.total}); });
+  pending=[]; $('dlg').close(); save(); render();
+}
+const drop=$('drop'), fi=$('file');
+drop.onclick=()=>{ replaceId=null; fi.click(); }; drop.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); replaceId=null; fi.click(); } };
+fi.onchange=()=>{ if(fi.files.length) handleFiles([...fi.files]); fi.value=''; };
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('on');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('on');}));
+drop.addEventListener('drop',e=>{ replaceId=null; if(e.dataTransfer.files.length) handleFiles([...e.dataTransfer.files]); });
+$('dOk').onclick=confirmAdd; $('dNo').onclick=()=>{ pending=[]; $('dlg').close(); };
+$('pend').addEventListener('keydown',e=>{ if(e.key==='Enter') confirmAdd(); });
+$('units').addEventListener('click',e=>{
+  const b = e.target.closest('button'); if(!b) return; const id=b.dataset.id, i=units.findIndex(u=>u.id===id); if(i<0) return;
+  if(b.dataset.a==='del'){ if(confirm('حذف وحدة «'+units[i].name+'»؟')){ units.splice(i,1); save(); render(); } }
+  else if(b.dataset.a==='repl'){ replaceId=id; fi.click(); }
+  else { const j = b.dataset.a==='l' ? i+1 : i-1; if(units[j]){ [units[i],units[j]]=[units[j],units[i]]; save(); render(); } }
+});
+$('units').addEventListener('change',e=>{ if(e.target.matches('input[data-id]')){ const u=units.find(x=>x.id===e.target.dataset.id); if(u){ u.name=e.target.value.trim()||u.name; save(); render(); } } });
+$('q').addEventListener('input',render);
+['hideZero','dupMode','roundInt'].forEach(i=>$(i).addEventListener('change',render));
+$('print').onclick=()=>window.print();
+
+/* ---------- تصدير Excel: شيت رئيسي + شيت لكل وحدة، والرئيسي مربوط بالوحدات بمعادلات ---------- */
+const colL = n => { let s=''; n++; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26);} return s; }; // 0 => A
+const MAIN = 'ارصده الوحدات';
+function sheetNames(){
+  const used = new Set([MAIN.toLowerCase()]), out = [];
+  units.forEach((u,i)=>{
+    let base = (u.name.replace(/[\[\]:*?\/\\]/g,' ').replace(/\s+/g,' ').trim().replace(/^'+|'+$/g,'') || 'وحدة '+(i+1)).slice(0,31), nm = base, k = 2;
+    while(used.has(nm.toLowerCase())){ const suf=' '+(k++); nm = base.slice(0,31-suf.length)+suf; }
+    used.add(nm.toLowerCase()); out.push(nm);
+  });
+  return out;
+}
+// نموذج بسيط (بدون ExcelJS) لكل ما سيُكتب — للفصل بين المنطق والكتابة
+function buildModel(C){
+  const n = units.length, names = sheetNames(), q = s => "'"+s.replace(/'/g,"''")+"'";
+  const lastU = colL(1+n);                       // آخر عمود وحدة
+  const rows = []; let r = 3;
+  C.groups.forEach(g=>{
+    if(!g.items.length) return;
+    const first = r;
+    g.items.forEach(it=>{
+      const cells = [{v:String(it.code)},{v:it.name}];
+      units.forEach((_,i)=>{
+        const sh = q(names[i]); let f;
+        if(C.o.dup==='sum'){ const core = `SUMIF(${sh}!$A:$A,A${r},${sh}!$B:$B)`; f = `IF(COUNTIF(${sh}!$A:$A,A${r}),${C.o.int?`ROUND(${core},0)`:core},"")`; }
+        else { const core = `VLOOKUP(A${r},${sh}!$A:$B,2,0)`; f = `IFERROR(${C.o.int?`ROUND(${core},0)`:core},"")`; }
+        cells.push({f, r: C.maps[i].has(it.code) ? it.v[i] : ''});
+      });
+      cells.push({f:`SUM(C${r}:${lastU}${r})`, r:it.t});
+      rows.push({kind:'item', cells}); r++;
+    });
+    const last = r-1, cells = [{v:null},{v:g.g}];
+    [...g.v, g.t].forEach((val,i)=>cells.push({f:`SUBTOTAL(9,${colL(2+i)}${first}:${colL(2+i)}${last})`, r:val}));
+    rows.push({kind:'group', cells}); r++;
+  });
+  const lastRow = r-1, cells = [{v:null},{v:'الإجمالي العام'}];
+  [...C.grand, C.gt].forEach((val,i)=>cells.push({f:`SUBTOTAL(9,${colL(2+i)}3:${colL(2+i)}${lastRow})`, r:val}));
+  rows.push({kind:'group', cells});
+  return {
+    n, names, title: $('title').value, lastRow: lastRow+1, rows,
+    unitSheets: units.map((u,i)=>({name:names[i], rows:u.rows.map(([c,qty,nm])=>[String(c),qty,nm])}))
+  };
+}
+async function exportXlsx(){
+  if(typeof ExcelJS==='undefined') throw new Error('تعذر تحميل مكتبة التصدير. تأكد من الاتصال بالإنترنت.');
+  const C = compute(true), M = buildModel(C), n = M.n, tot = 3+n;           // tot: رقم عمود الإجمالي (1-based)
+  const wb = new ExcelJS.Workbook(); wb.creator = ''; wb.lastModifiedBy = ''; wb.calcProperties = {fullCalcOnLoad:true};
+  const F = 'Arial', thin = {style:'thin'}, blk = {argb:'FF000000'};
+  const solid = a => ({type:'pattern',pattern:'solid',fgColor:{argb:a}});
+  const props = {defaultRowHeight:12.75, defaultColWidth:6.85546875};
+
+  /* الشيت الرئيسي — بنفس تنسيق الشيت الأصلي */
+  const ws = wb.addWorksheet(MAIN,{properties:props,views:[{state:'frozen',ySplit:2,topLeftCell:'A3',activeCell:'A3',zoomScale:100}]});
+  ws.columns = [{width:12},{width:38.140625},{width:10.5703125},...units.slice(1).map(()=>({width:11.5703125})),{width:11.5703125}];
+  if(n===0) ws.columns = [{width:12},{width:38.140625}];
+  ws.mergeCells(1,2,1,tot);
+  const d = ws.getCell('A1'); d.value = {formula:'NOW()',result:new Date()}; d.numFmt = 'mm-dd-yy';
+  d.font = {name:F,size:11,bold:true,color:{argb:'FFFFFFFF'}}; d.fill = solid('FF000000');
+  d.border = {left:{style:'medium'},top:{style:'medium'},bottom:{style:'medium'}}; d.alignment = {horizontal:'center',vertical:'middle'};
+  const t = ws.getCell('B1'); t.value = M.title; t.font = {name:F,size:14,bold:true,color:{argb:'FFFFFFFF'}}; t.fill = solid('FF767171'); t.alignment = {horizontal:'center',vertical:'middle'};
+  ['الكود','الصنف',...units.map(u=>u.name),'اجمالي الرصيد'].forEach((h,i)=>{
+    const c = ws.getCell(2,i+1); c.value = h;
+    c.font = {name:F,size:11,bold:true,color:blk}; c.fill = solid('FFFFFF00');
+    c.border = {left:thin,right:thin,bottom:thin}; c.alignment = {horizontal:'center',vertical:'middle'};
+  });
+  M.rows.forEach(rw=>{
+    const row = ws.addRow(rw.cells.map(c=> c.f ? {formula:c.f,result:c.r} : c.v));
+    for(let i=1;i<=tot;i++){
+      const c = row.getCell(i);
+      c.font = {name:F,size:10,color:blk}; c.border = {left:thin,right:thin,top:thin,bottom:thin};
+      c.alignment = {horizontal:'center',vertical:'middle',wrapText:i===2};
+      if(i>2) c.numFmt = '#,##0';
+      if(rw.kind==='group') c.fill = solid('FFD0CECE');
+    }
+  });
+  for(let i=1;i<=ws.rowCount;i++) ws.getRow(i).height = 24.95;
+  const last = ws.rowCount;
+  ws.autoFilter = {from:'A2',to:colL(2+n)+last};
+  ws.addConditionalFormatting({ref:`A3:A${last}`,rules:[{type:'expression',priority:1,formulae:[`AND(A3<>"",COUNTIF($A$3:$A$${last},A3)>1)`],style:{font:{color:{argb:'FF9C0006'}},fill:{type:'pattern',pattern:'solid',bgColor:{argb:'FFFFC7CE'}}}}]});
+  ws.pageSetup = {orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:0,printTitlesRow:'1:2',margins:{left:0.7,right:0.7,top:0.75,bottom:0.75,header:0.3,footer:0.3}};
+
+  /* شيت لكل وحدة — بيانات خام (كود، كرتونة، الصنف) بدون عناوين، كما في الأصل */
+  M.unitSheets.forEach(u=>{
+    const s = wb.addWorksheet(u.name,{properties:{defaultRowHeight:12.75}});
+    s.columns = [{width:10.140625},{width:12},{width:37.7109375}];
+    u.rows.forEach(r=>{ const row = s.addRow(r); for(let i=1;i<=3;i++) row.getCell(i).font = {name:F,size:10,color:blk}; });
+  });
+
+  const buf = await wb.xlsx.writeBuffer();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+  a.download = 'ارصدة_الوحدات_'+new Date().toISOString().slice(0,10)+'.xlsx'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+$('export').onclick = async ()=>{ try{ await exportXlsx(); }catch(e){ showErr(e.message); } };
+
+restore(); render();
+</script>
+</body>
+</html>

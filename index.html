@@ -40,7 +40,7 @@ h2{font-size:16px;margin:22px 0 10px}
 .tools label{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--mute);cursor:pointer}
 .sp{flex:1}
 .note{background:var(--warn);border:1px solid var(--warnb);border-radius:12px;padding:10px 14px;margin:0 0 10px;font-size:13.5px}
-.note.err{border-color:var(--bad)}.note summary{cursor:pointer;font-weight:600}.note ul{margin:6px 0 0;padding-inline-start:20px}
+.note.err{border-color:var(--bad)}.note summary{cursor:pointer;font-weight:600}.note ul{margin:6px 0 0;padding-inline-start:20px}#chg ul{max-height:340px;overflow:auto}#chg select{font:inherit;font-size:12.5px;max-width:100%;padding:2px 6px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}#chg li{margin-bottom:4px}
 .tw{overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);max-height:75vh}
 table{border-collapse:separate;border-spacing:0;width:100%}
 th{background:var(--gold);color:#1d2a2a;position:sticky;top:0;padding:9px 10px;font-weight:700;text-align:center;z-index:3;white-space:nowrap}
@@ -86,6 +86,7 @@ dialog h3{margin:0 0 4px}dialog p{margin:0 0 12px;color:var(--mute);font-size:13
 <label><input type="checkbox" id="roundInt"> تقريب الكسور لأقرب كرتونة</label>
 </div>
 <div class="tools noprint"><input type="text" id="title" value="رصيد مخازن وحدات الشرقيه و دمياط" aria-label="عنوان التقرير (للتصدير)"><span class="sp"></span>
+<button class="btn ghost" id="resetCat" title="إرجاع قائمة الأصناف للقالب الأصلي">إعادة ضبط القائمة</button>
 <button class="btn ghost" id="print">طباعة</button>
 <button class="btn" id="export">تصدير Excel</button>
 </div>
@@ -98,7 +99,7 @@ dialog h3{margin:0 0 4px}dialog p{margin:0 0 12px;color:var(--mute);font-size:13
 
 <script>
 "use strict";
-const TPL = [{"g":"دوش 60 جم * 48","i":[["5001","دوش اسود 60 جم * 48"],["5002","دوش أصفر 60 جم * 48"],["5003","دوش روز 60 جم * 48"],["5004","دوش ازرق 60 جم * 48"],["5165","FLOWRAP دوش أبيض 60 جم * 48"],["5028","دوش مانجو 60 جم *48"]]},{"g":"BUNDLE 4 SP PRINT دوش 110 جم * 48","i":[["5119","BUNDLE 4 SP PRINT دوش أسود 110 جم * 48"],["5120","BUNDLE 4 SP PRINT دوش موف 110 جم * 48"],["5122","BUNDLE 4 SP PRINT دوش ازرق 110 جم * 48"],["5161","INT SP 4 BUNDLEدوش ابيض 110 جم * 48"],["5121","BUNDLE 4 SP PRINT دوش روز 110 جم * 48"]]},{"g":"ريفولى 110جم*48 BUNDLE 4 PR","i":[["5628","ريفولى روز 110جم*48 BUNDLE 4 PR"],["5629","ريفولى موف 110جم*48 BUNDLE 4 PR"],["5630","ريفولي أسود 110 جم * 48 BUNDLE 4 PR"],["5631","ريفولى ابيض 110جم*48 BUNDLE 4 PR"],["5632","ريفولى عود 110جم*48 BUNDLE 4 PR"]]},{"g":"BUNDLE 2 -ريفولي 165 جم * 24 عرض خاص","i":[["5608","BUNDLE 2 -ريفولي روز 165 جم * 24 عرض خاص"],["5609","BUNDLE 2 -ريفولي موف 165 جم * 24 عرض خاص"],["5610","BUNDLE 2 -ريفولي ابيض 165 جم * 24 عرض خاص"],["5611","BUNDLE 2 -ريفولي اسود 165 جم * 24 عرض خاص"]]},{"g":"باهى H.S","i":[["7705","باهى 50جم*24 H.S Lavender"],["7706","باهى 50جم*24 H.S flower breeze"],["7807","باهي 115 جم * 20 - H.S Lavender"],["7808","باهي 115 جم * 20- H.S flower breeze"],["7754","باهي 160 جم * 8 - H.S Lavender"],["7709","باهي 185 جم * 8 - H.S LAVENDER-NEW"],["7710","باهى 185 جم* 8 H.S flower breeze"],["7711","باهى 265 جم*8 H.S Lavender"],["7712","باهى 265 جم* 8 H.S flower breeze"],["7809","باهي 350 جم * 8 - H.S Lavender-NEW"],["7810","باهي 350 جم * 8 - H.S flower breeze"],["7758","باهي 360 جم * 6 - H.S Lavender"],["7811","باهي 435 جم * 6 - H.S LAVENDER"],["7812","باهي 435 جم * 6 - H.S Flowe"],["7605","باهي 1 كجم * 6 - H.S LAVENDER"],["7606","باهي 1 كجم * 6 - H.S flower breeze"],["7049","باهي 1500 جم * 4 - H.S LAVENDER new"],["7448","باهي 1.5 كجم * 4 - H.S flower breez"],["7449","باهي 2 كجم * 4 - H.S flower breeze"],["7059","باهى 2 كجم * 4 lavender H.S"]]},{"g":"باهى -L.S","i":[["6920","باهى 2.5 كجم +300 جم*4-L.S Lavender"],["7450","باهي 2500 جم+ 300 جم * 4 - L.S flower br"],["6922","باهى 4 كجم + 500جم*3-L.S Lavender"],["7451","باهي 4000 جم+ 500 جم * 3 - L.S flower bre"],["6924","باهى 8 كجم + 1كجم*2-L.S Lavender"],["7452","باهي 8 كجم+ 1 كجم * 2 - L.S flower bree"]]},{"g":"باهي H.S GEL Black ST UP","i":[["7522","باهي 35 جم * 36 - H.S GEL Lavender"],["7525","باهي 35 جم * 36 - H.S GEL Black"],["7763","باهي 30 جم * 48 - H.S GEL Black"],["7761","باهي 60 جم * 36 - H.S GEL Lavender"],["7764","باهي 60 جم * 36 - H.S GEL Black"],["7523","باهي 90 جم * 18 - H.S GEL Lavender"],["7526","باهي 90 جم * 18 - H.S GEL Black"],["7524","باهى 190 جم*12 H.S GEL Lavender"]]},{"g":"","i":[["7322","اوكسى جيل 50 جم *36 لافندر"],["7326","اوكسى جيل 90 جم *18 لافندر"],["7330","اوكسى جيل 185 جم *12 لافندر"],["6589","GEL LAVENDER - أوكسي 3 كجم * 4 - L.S"]]},{"g":"","i":[["7517","اوكسى 50جم*32- H .S ORIENTAL"],["7520","اوكسى 110جم*24- H .S ORIENTAL"],["7521","اوكسى110جم*24- H .S LAVENDER"],["9019","أوكسي 110 جم * 16 - H.S Oriental NEW"],["6115","أوكسي 1 كجم * 6 - H.S SPRING"],["6225","L.S SPRIN-2* FREE أوكسي 8 كجم + 1 كجم"],["6991","أوكسي 1500 جم * 4 - H.S Orienta"],["7345","أوكسي 1 كجم * 6 - H.S Oriental"],["7058","أوكسي 2 كجم * 4 - H.S LAVENDER NEW"],["7518","اوكسى 50جم*32- H .S LAVENDER"],["6989","أوكسي 1500 جم * 4 - H.S Spring"],["9023","أوكسي 175 جم * 12 - H.S LAVENDER"],["9022","أوكسي 175 جم * 12 - H.S ORIENTAL"],["7334","اوكسى جيل عادى 290 جم * 8 لافندر"],["8488","بريكس كلور إلوان - BLUE 950 مل * 12"]]},{"g":"وفير ليمون 40جم *48 ساشيه","i":[["8205","وفير ليمون اخضر 40جم *48 ساشيه"],["8206","وفير ليمون اصفر 40جم *48 ساشيه"]]},{"g":"DWL - وفير ليمون 725 جم * 12","i":[["8272","DWL - وفير ليمون أخضر 725 جم * 12"],["8273","DWL - وفير ليمون أصفر 725 جم * 12"]]},{"g":"DWL- وفير ليمون 690 جم *12","i":[["9461","DWL- وفير ليمون أخضر 690 جم *12"],["9462","DWL- وفير ليمون اصفر 690 جم *12"]]},{"g":"DWL New Shape - وفير ليمون 4 كجم *4","i":[["8338","DWL New Shape - وفير ليمون أخضر 4 كجم * 4"],["8337","DWL New Shape - وفير ليمون أصفر 4 كجم *4"]]},{"g":"برايت ليمون كجم *1- DWL","i":[["8374","برايت هاند ووش فواكه 5 كجم*4"],["8370","برايت ليمون أخضر 10 كجم *1- DWL"],["8371","برايت ليمون أصفر 10 كجم *1- DWL"],["8373","برايت ليمون أصفر 20 كجم *1- DWL"],["8372","برايت ليمون أخضر 20 كجم *1- DWL"],["8958","برايت منظف و مطهر لألسطح المتعددة 5كجم*4"],["8957","برايت منظف متعدد االغراض بدون رائحة10كجم"],["8990","برايت منظف متعدد االغراض بدون رائحة20كجم"]]},{"g":"دوش هاند ووش 450 مل * 12","i":[["8803","دوش موف هاند ووش 450 مل * 12"],["8804","دوش أسود هاند ووش 450 مل * 12"],["8805","دوش أبيض هاند ووش 450 مل * 12"],["8819","دوش روز هاند ووش 450 مل * 12"],["8890","%دوش روز هاند وش+450موف ش.ج600مل*6×2"],["8891","%دوش موف هاند وش+450أبيض ش.ج600م*6×2"],["8892","%دوش أبيض هاند وش+450أسود ش.ج600*6×2"],["8893","%دوش أسود هاند وش+450روز ش.ج600م*6×2"]]},{"g":"","i":[["8970","pouch UP.STدوش موف هاند ووش 350 مل * 12"],["8971","Pouch UP.STدوش أسود هاند ووش 350 مل *12"]]},{"g":"SP ED ريفولي هاند وش 450 ملي * 12","i":[["8663","SP ED ريفولي عود هاند وش 450 ملي * 12"],["8664","SP ED ريفولي أبيض هاند وش 450 ملي * 12"],["8661","SP ED ريفولي روز هاند وش 450 ملي * 12"],["8660","SP ED ريفولي موف هاند وش 450 ملي * 12"],["8636","ريفولي عود هاند وش 500 ملي * 12"],["8882","ريفولي ستار هاند وش 450 مل* 12"],["8662","SP ED ريفولي أسود هاند وش 450 ملي * 12"]]},{"g":"دوش شاور جل 30 جم * 60 ساشيه","i":[["8800","دوش موف شاور جل 30 جم * 60 ساشيه"],["8801","دوش أسود شاور جل 30 جم * 60 ساشيه"]]},{"g":"دوش شاور جل 350 مل* 12 Spout sachet","i":[["8822","دوش أسود شاور جل 350 مل* 12 Spout sachet"],["8823","دوش موف شاور جل 350 مل* 12 Spout sachet"],["8824","دوش روز شاور جل 350 مل* 12 Spout sachet"]]},{"g":"دوش شاور جل 600 مل * 12","i":[["8806","دوش موف شاور جل 600 مل * 12"],["8807","دوش أسود شاور جل 600 مل * 12"],["8808","دوش أبيض شاور جل 600 مل * 12"],["8820","دوش روز شاور جل 600 مل * 12"]]},{"g":"دوش شاور جل 1 لتر * 12","i":[["8809","دوش موف شاور جل 1 لتر * 12"],["8810","دوش أسود شاور جل 1 لتر * 12"],["8811","دوش أبيض شاور جل 1 لتر * 12"],["8821","دوش روز شاور جل 1 لتر * 12"]]},{"g":"دوش شاور جل 1.8 لتر * 4","i":[["8814","دوش أسود شاور جل 1.8 لتر * 4"],["8815","دوش موف شاور جل 1.8 لتر * 4"],["8816","دوش روز شاور جل 1.8 لتر * 4"],["8817","دوش أبيض شاور جل 1.8 لتر * 4"]]},{"g":"ريفولي شاور جل 45 جم * 50 ساشيه","i":[["8828","ريفولي عود شاور جل 45 جم * 50 ساشيه"],["8826","ريفولي موف شاور جل 45 جم * 50 ساشيه"],["8827","ريفولي أسود شاور جل 45 جم * 50 ساشيه"],["8829","ريفولي روز شاور جل 45 جم * 50 ساشيه"]]},{"g":"ريفولي شاور جل 500 ملي * 12","i":[["8549","ريفولي عود شاور جل 500 ملي * 12"],["8550","ريفولي روز شاور جل 500 ملي * 12"],["8551","ريفولي أسود شاور جل 500 ملي * 12"],["8548","ريفولي موف شاور جل 500 ملي * 12"],["8558","ريفولي أبيض شاور جل 500 ملي * 12"]]},{"g":"Pريفولي شاورجل500مل (عود+موف+لوفة)*6","i":[["9139","Pريفولي شاورجل500مل (ابيض+موف+لوفة)*6"],["9140","Pريفولي شاورجل500مل (روز+اسود+لوفة)*6"],["9150","Pريفولي شاورجل500مل (اسود+ستار+لوفة)*6"],["9138","Pريفولي شاورجل500مل (عود+موف+لوفة)*6"]]},{"g":"SP ED ريفولي شاور جل 1 لتر * 12","i":[["8516","SP ED ريفولي شاور جل موف 1 لتر * 12"],["8518","SP ED ريفولي شاور جل روز 1 لتر * 12"],["8519","SP ED ريفولي شاور جل اسود 1 لتر * 12"],["8547","ريفولي شاور جل عود 1 لتر *SP ED12"],["8881","ريفولي ستار شاور جل 1 لتر* 12"],["8559","SP ED ريفولي أبيض شاور جل 1 لتر * 12"]]},{"g":"ريفولي شاور جل 2 لتر * 4","i":[["8552","ريفولي موف شاور جل 2 لتر * 4"],["8554","ريفولي روز شاور جل 2 لتر * 4"],["8555","ريفولي أسود شاور جل 2 لتر * 4"],["8560","ريفولي أبيض شاور جل 2 لتر * 4"]]},{"g":"SP ED ريفولي شاور جل 3 لتر * 4","i":[["8656","SP ED ريفولي موف شاور جل 3 لتر * 4"],["8657","SP ED ريفولي روز شاور جل 3 لتر * 4"],["8658","SP ED ريفولي أسود شاور جل 3 لتر * 4"],["8659","SP ED ريفولي أبيض شاور جل 3 لتر * 4"]]},{"g":"Profre كير د. كلين هاند ووش مل* 12","i":[["5712","Profresh صابون كير د. كلين روز 85 جم* 48"],["5710","ice Fresh صابون كير د. كلين أخضر 85 جم* 48"],["8609","ice Fr كير د. كلين أخضر هاند ووش 200 مل* 12"],["8610","blue M كير د. كلين أزرق هاند ووش 200 مل* 12"],["8617","Ice Fr كير د. كلين أخضر هاند ووش 450 مل* 12"],["8618","Blue M كير د. كلين أزرق هاند ووش 450 مل* 12"],["8619","Profre كير د. كلين روز هاند ووش 450 مل* 12"]]},{"g":"6BUN -جوي شامبو 200 مل* 12","i":[["8720","6BUN -جوي شامبو شاي أخضر&جنزبيل 200 مل* 12"],["8721","6BUN -جوي شامبو افوكادو&لوز حلو 200 مل* 12"],["8722","6BUN -جوي شامبو صبار&جوجوبا 200 مل* 12"],["8724","6BUN -جوي شامبو جوز هند&روزماري 200 مل* 12"],["8725","6BUN -جوي شامبو عسل&وزيت ارجان 200 مل* 12"]]},{"g":"6BUN -جوي شامبو 350 مل* 12","i":[["8726","6BUN -جوي شامبو شاي أخضر&جنزبيل 350 مل* 12"],["8727","6BUN -جوي شامبو افوكادو&لوز حلو 350 مل* 12"],["8728","6BUN -جوي شامبو صبار&جوجوبا 350 مل* 12"],["8729","6BUN -جوي شامبو زبدة.ش يا&ز.زيتون 350 مل* 12"],["8730","6BUN -جوي شامبو جوز هند&روزماري 350 مل* 12"],["8731","6BUN -جوي شامبو عسل&ارجان 350 مل* 12"]]},{"g":"6BUN -جوي بلسم 200 مل* 12","i":[["8738","6BUN -جوي بلسم شاي أخضر&جنزبيل 200 مل* 12"],["8740","6BUN -جوي بلسم صبار&جوجوبا 200 مل* 12"],["8741","6BUN -جوي بلسم ز.ش يا&ز.زيتون 200 مل* 12"],["8743","6BUN -جوي بلسم عسل&ارجان 200 مل* 12"]]},{"g":"6BUN -جوي بلسم 350 مل* 12","i":[["8744","6BUN -جوي بلسم شاي أخضر&جنزبيل 350 مل* 12"],["8745","6BUN -جوي بلسم افوكادو&لوز حلو 350 مل* 12"],["8746","6BUN -جوي بلسم صبار&جوجوبا 350 مل* 12"],["8747","6BUN -جوي بلسم ز.ش يا&ز.زيتون 350 مل* 12"]]}]; // [{g:اسم المجموعة, i:[[كود,اسم]]}]
+const BASE = [{"g":"دوش 60 جم * 48","i":[["5001","دوش اسود 60 جم * 48"],["5002","دوش أصفر 60 جم * 48"],["5003","دوش روز 60 جم * 48"],["5004","دوش ازرق 60 جم * 48"],["5165","FLOWRAP دوش أبيض 60 جم * 48"],["5028","دوش مانجو 60 جم *48"]]},{"g":"BUNDLE 4 SP PRINT دوش 110 جم * 48","i":[["5119","BUNDLE 4 SP PRINT دوش أسود 110 جم * 48"],["5120","BUNDLE 4 SP PRINT دوش موف 110 جم * 48"],["5122","BUNDLE 4 SP PRINT دوش ازرق 110 جم * 48"],["5161","INT SP 4 BUNDLEدوش ابيض 110 جم * 48"],["5121","BUNDLE 4 SP PRINT دوش روز 110 جم * 48"]]},{"g":"ريفولى 110جم*48 BUNDLE 4 PR","i":[["5628","ريفولى روز 110جم*48 BUNDLE 4 PR"],["5629","ريفولى موف 110جم*48 BUNDLE 4 PR"],["5630","ريفولي أسود 110 جم * 48 BUNDLE 4 PR"],["5631","ريفولى ابيض 110جم*48 BUNDLE 4 PR"],["5632","ريفولى عود 110جم*48 BUNDLE 4 PR"]]},{"g":"BUNDLE 2 -ريفولي 165 جم * 24 عرض خاص","i":[["5608","BUNDLE 2 -ريفولي روز 165 جم * 24 عرض خاص"],["5609","BUNDLE 2 -ريفولي موف 165 جم * 24 عرض خاص"],["5610","BUNDLE 2 -ريفولي ابيض 165 جم * 24 عرض خاص"],["5611","BUNDLE 2 -ريفولي اسود 165 جم * 24 عرض خاص"]]},{"g":"باهى H.S","i":[["7705","باهى 50جم*24 H.S Lavender"],["7706","باهى 50جم*24 H.S flower breeze"],["7807","باهي 115 جم * 20 - H.S Lavender"],["7808","باهي 115 جم * 20- H.S flower breeze"],["7754","باهي 160 جم * 8 - H.S Lavender"],["7709","باهي 185 جم * 8 - H.S LAVENDER-NEW"],["7710","باهى 185 جم* 8 H.S flower breeze"],["7711","باهى 265 جم*8 H.S Lavender"],["7712","باهى 265 جم* 8 H.S flower breeze"],["7809","باهي 350 جم * 8 - H.S Lavender-NEW"],["7810","باهي 350 جم * 8 - H.S flower breeze"],["7758","باهي 360 جم * 6 - H.S Lavender"],["7811","باهي 435 جم * 6 - H.S LAVENDER"],["7812","باهي 435 جم * 6 - H.S Flowe"],["7605","باهي 1 كجم * 6 - H.S LAVENDER"],["7606","باهي 1 كجم * 6 - H.S flower breeze"],["7049","باهي 1500 جم * 4 - H.S LAVENDER new"],["7448","باهي 1.5 كجم * 4 - H.S flower breez"],["7449","باهي 2 كجم * 4 - H.S flower breeze"],["7059","باهى 2 كجم * 4 lavender H.S"]]},{"g":"باهى -L.S","i":[["6920","باهى 2.5 كجم +300 جم*4-L.S Lavender"],["7450","باهي 2500 جم+ 300 جم * 4 - L.S flower br"],["6922","باهى 4 كجم + 500جم*3-L.S Lavender"],["7451","باهي 4000 جم+ 500 جم * 3 - L.S flower bre"],["6924","باهى 8 كجم + 1كجم*2-L.S Lavender"],["7452","باهي 8 كجم+ 1 كجم * 2 - L.S flower bree"]]},{"g":"باهي H.S GEL Black ST UP","i":[["7522","باهي 35 جم * 36 - H.S GEL Lavender"],["7525","باهي 35 جم * 36 - H.S GEL Black"],["7763","باهي 30 جم * 48 - H.S GEL Black"],["7761","باهي 60 جم * 36 - H.S GEL Lavender"],["7764","باهي 60 جم * 36 - H.S GEL Black"],["7523","باهي 90 جم * 18 - H.S GEL Lavender"],["7526","باهي 90 جم * 18 - H.S GEL Black"],["7524","باهى 190 جم*12 H.S GEL Lavender"]]},{"g":"","i":[["7322","اوكسى جيل 50 جم *36 لافندر"],["7326","اوكسى جيل 90 جم *18 لافندر"],["7330","اوكسى جيل 185 جم *12 لافندر"],["6589","GEL LAVENDER - أوكسي 3 كجم * 4 - L.S"]]},{"g":"","i":[["7517","اوكسى 50جم*32- H .S ORIENTAL"],["7520","اوكسى 110جم*24- H .S ORIENTAL"],["7521","اوكسى110جم*24- H .S LAVENDER"],["9019","أوكسي 110 جم * 16 - H.S Oriental NEW"],["6115","أوكسي 1 كجم * 6 - H.S SPRING"],["6225","L.S SPRIN-2* FREE أوكسي 8 كجم + 1 كجم"],["6991","أوكسي 1500 جم * 4 - H.S Orienta"],["7345","أوكسي 1 كجم * 6 - H.S Oriental"],["7058","أوكسي 2 كجم * 4 - H.S LAVENDER NEW"],["7518","اوكسى 50جم*32- H .S LAVENDER"],["6989","أوكسي 1500 جم * 4 - H.S Spring"],["9023","أوكسي 175 جم * 12 - H.S LAVENDER"],["9022","أوكسي 175 جم * 12 - H.S ORIENTAL"],["7334","اوكسى جيل عادى 290 جم * 8 لافندر"],["8488","بريكس كلور إلوان - BLUE 950 مل * 12"]]},{"g":"وفير ليمون 40جم *48 ساشيه","i":[["8205","وفير ليمون اخضر 40جم *48 ساشيه"],["8206","وفير ليمون اصفر 40جم *48 ساشيه"]]},{"g":"DWL - وفير ليمون 725 جم * 12","i":[["8272","DWL - وفير ليمون أخضر 725 جم * 12"],["8273","DWL - وفير ليمون أصفر 725 جم * 12"]]},{"g":"DWL- وفير ليمون 690 جم *12","i":[["9461","DWL- وفير ليمون أخضر 690 جم *12"],["9462","DWL- وفير ليمون اصفر 690 جم *12"]]},{"g":"DWL New Shape - وفير ليمون 4 كجم *4","i":[["8338","DWL New Shape - وفير ليمون أخضر 4 كجم * 4"],["8337","DWL New Shape - وفير ليمون أصفر 4 كجم *4"]]},{"g":"برايت ليمون كجم *1- DWL","i":[["8374","برايت هاند ووش فواكه 5 كجم*4"],["8370","برايت ليمون أخضر 10 كجم *1- DWL"],["8371","برايت ليمون أصفر 10 كجم *1- DWL"],["8373","برايت ليمون أصفر 20 كجم *1- DWL"],["8372","برايت ليمون أخضر 20 كجم *1- DWL"],["8958","برايت منظف و مطهر لألسطح المتعددة 5كجم*4"],["8957","برايت منظف متعدد االغراض بدون رائحة10كجم"],["8990","برايت منظف متعدد االغراض بدون رائحة20كجم"]]},{"g":"دوش هاند ووش 450 مل * 12","i":[["8803","دوش موف هاند ووش 450 مل * 12"],["8804","دوش أسود هاند ووش 450 مل * 12"],["8805","دوش أبيض هاند ووش 450 مل * 12"],["8819","دوش روز هاند ووش 450 مل * 12"],["8890","%دوش روز هاند وش+450موف ش.ج600مل*6×2"],["8891","%دوش موف هاند وش+450أبيض ش.ج600م*6×2"],["8892","%دوش أبيض هاند وش+450أسود ش.ج600*6×2"],["8893","%دوش أسود هاند وش+450روز ش.ج600م*6×2"]]},{"g":"","i":[["8970","pouch UP.STدوش موف هاند ووش 350 مل * 12"],["8971","Pouch UP.STدوش أسود هاند ووش 350 مل *12"]]},{"g":"SP ED ريفولي هاند وش 450 ملي * 12","i":[["8663","SP ED ريفولي عود هاند وش 450 ملي * 12"],["8664","SP ED ريفولي أبيض هاند وش 450 ملي * 12"],["8661","SP ED ريفولي روز هاند وش 450 ملي * 12"],["8660","SP ED ريفولي موف هاند وش 450 ملي * 12"],["8636","ريفولي عود هاند وش 500 ملي * 12"],["8882","ريفولي ستار هاند وش 450 مل* 12"],["8662","SP ED ريفولي أسود هاند وش 450 ملي * 12"]]},{"g":"دوش شاور جل 30 جم * 60 ساشيه","i":[["8800","دوش موف شاور جل 30 جم * 60 ساشيه"],["8801","دوش أسود شاور جل 30 جم * 60 ساشيه"]]},{"g":"دوش شاور جل 350 مل* 12 Spout sachet","i":[["8822","دوش أسود شاور جل 350 مل* 12 Spout sachet"],["8823","دوش موف شاور جل 350 مل* 12 Spout sachet"],["8824","دوش روز شاور جل 350 مل* 12 Spout sachet"]]},{"g":"دوش شاور جل 600 مل * 12","i":[["8806","دوش موف شاور جل 600 مل * 12"],["8807","دوش أسود شاور جل 600 مل * 12"],["8808","دوش أبيض شاور جل 600 مل * 12"],["8820","دوش روز شاور جل 600 مل * 12"]]},{"g":"دوش شاور جل 1 لتر * 12","i":[["8809","دوش موف شاور جل 1 لتر * 12"],["8810","دوش أسود شاور جل 1 لتر * 12"],["8811","دوش أبيض شاور جل 1 لتر * 12"],["8821","دوش روز شاور جل 1 لتر * 12"]]},{"g":"دوش شاور جل 1.8 لتر * 4","i":[["8814","دوش أسود شاور جل 1.8 لتر * 4"],["8815","دوش موف شاور جل 1.8 لتر * 4"],["8816","دوش روز شاور جل 1.8 لتر * 4"],["8817","دوش أبيض شاور جل 1.8 لتر * 4"]]},{"g":"ريفولي شاور جل 45 جم * 50 ساشيه","i":[["8828","ريفولي عود شاور جل 45 جم * 50 ساشيه"],["8826","ريفولي موف شاور جل 45 جم * 50 ساشيه"],["8827","ريفولي أسود شاور جل 45 جم * 50 ساشيه"],["8829","ريفولي روز شاور جل 45 جم * 50 ساشيه"]]},{"g":"ريفولي شاور جل 500 ملي * 12","i":[["8549","ريفولي عود شاور جل 500 ملي * 12"],["8550","ريفولي روز شاور جل 500 ملي * 12"],["8551","ريفولي أسود شاور جل 500 ملي * 12"],["8548","ريفولي موف شاور جل 500 ملي * 12"],["8558","ريفولي أبيض شاور جل 500 ملي * 12"]]},{"g":"Pريفولي شاورجل500مل (عود+موف+لوفة)*6","i":[["9139","Pريفولي شاورجل500مل (ابيض+موف+لوفة)*6"],["9140","Pريفولي شاورجل500مل (روز+اسود+لوفة)*6"],["9150","Pريفولي شاورجل500مل (اسود+ستار+لوفة)*6"],["9138","Pريفولي شاورجل500مل (عود+موف+لوفة)*6"]]},{"g":"SP ED ريفولي شاور جل 1 لتر * 12","i":[["8516","SP ED ريفولي شاور جل موف 1 لتر * 12"],["8518","SP ED ريفولي شاور جل روز 1 لتر * 12"],["8519","SP ED ريفولي شاور جل اسود 1 لتر * 12"],["8547","ريفولي شاور جل عود 1 لتر *SP ED12"],["8881","ريفولي ستار شاور جل 1 لتر* 12"],["8559","SP ED ريفولي أبيض شاور جل 1 لتر * 12"]]},{"g":"ريفولي شاور جل 2 لتر * 4","i":[["8552","ريفولي موف شاور جل 2 لتر * 4"],["8554","ريفولي روز شاور جل 2 لتر * 4"],["8555","ريفولي أسود شاور جل 2 لتر * 4"],["8560","ريفولي أبيض شاور جل 2 لتر * 4"]]},{"g":"SP ED ريفولي شاور جل 3 لتر * 4","i":[["8656","SP ED ريفولي موف شاور جل 3 لتر * 4"],["8657","SP ED ريفولي روز شاور جل 3 لتر * 4"],["8658","SP ED ريفولي أسود شاور جل 3 لتر * 4"],["8659","SP ED ريفولي أبيض شاور جل 3 لتر * 4"]]},{"g":"Profre كير د. كلين هاند ووش مل* 12","i":[["5712","Profresh صابون كير د. كلين روز 85 جم* 48"],["5710","ice Fresh صابون كير د. كلين أخضر 85 جم* 48"],["8609","ice Fr كير د. كلين أخضر هاند ووش 200 مل* 12"],["8610","blue M كير د. كلين أزرق هاند ووش 200 مل* 12"],["8617","Ice Fr كير د. كلين أخضر هاند ووش 450 مل* 12"],["8618","Blue M كير د. كلين أزرق هاند ووش 450 مل* 12"],["8619","Profre كير د. كلين روز هاند ووش 450 مل* 12"]]},{"g":"6BUN -جوي شامبو 200 مل* 12","i":[["8720","6BUN -جوي شامبو شاي أخضر&جنزبيل 200 مل* 12"],["8721","6BUN -جوي شامبو افوكادو&لوز حلو 200 مل* 12"],["8722","6BUN -جوي شامبو صبار&جوجوبا 200 مل* 12"],["8724","6BUN -جوي شامبو جوز هند&روزماري 200 مل* 12"],["8725","6BUN -جوي شامبو عسل&وزيت ارجان 200 مل* 12"]]},{"g":"6BUN -جوي شامبو 350 مل* 12","i":[["8726","6BUN -جوي شامبو شاي أخضر&جنزبيل 350 مل* 12"],["8727","6BUN -جوي شامبو افوكادو&لوز حلو 350 مل* 12"],["8728","6BUN -جوي شامبو صبار&جوجوبا 350 مل* 12"],["8729","6BUN -جوي شامبو زبدة.ش يا&ز.زيتون 350 مل* 12"],["8730","6BUN -جوي شامبو جوز هند&روزماري 350 مل* 12"],["8731","6BUN -جوي شامبو عسل&ارجان 350 مل* 12"]]},{"g":"6BUN -جوي بلسم 200 مل* 12","i":[["8738","6BUN -جوي بلسم شاي أخضر&جنزبيل 200 مل* 12"],["8740","6BUN -جوي بلسم صبار&جوجوبا 200 مل* 12"],["8741","6BUN -جوي بلسم ز.ش يا&ز.زيتون 200 مل* 12"],["8743","6BUN -جوي بلسم عسل&ارجان 200 مل* 12"]]},{"g":"6BUN -جوي بلسم 350 مل* 12","i":[["8744","6BUN -جوي بلسم شاي أخضر&جنزبيل 350 مل* 12"],["8745","6BUN -جوي بلسم افوكادو&لوز حلو 350 مل* 12"],["8746","6BUN -جوي بلسم صبار&جوجوبا 350 مل* 12"],["8747","6BUN -جوي بلسم ز.ش يا&ز.زيتون 350 مل* 12"]]}]; // القالب الأصلي: [{g:اسم المجموعة, i:[[كود,اسم]]}]
 const KEY = 'wh_units_v1';
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -106,7 +107,115 @@ const norm = v => String(v??'').trim().replace(/\.0+$/,'');
 const isNum = v => typeof v==='number' ? isFinite(v) : (typeof v==='string' && v.trim()!=='' && isFinite(+v.replace(/,/g,'')));
 const toNum = v => typeof v==='number' ? v : +String(v).replace(/,/g,'');
 const CODE = /^\d{3,6}$/;
-const TPLCODES = new Set(TPL.flatMap(b=>b.i.map(x=>x[0])));
+
+/* ---------- قائمة الأصناف: تتحدّث تلقائياً مع كل رفع ---------- */
+const CKEY = 'wh_catalog_v1', TH = 0.28;
+let catalog = [], chOpen = false;
+const freshCatalog = () => BASE.map(b=>({g:b.g||'', i:b.i.map(([c,n])=>({c,n}))}));
+function loadCat(){ try{ const s = localStorage.getItem(CKEY); catalog = s ? JSON.parse(s) : freshCatalog(); }catch(e){ catalog = freshCatalog(); } if(!Array.isArray(catalog)||!catalog.length) catalog = freshCatalog(); }
+function saveCat(){ try{ localStorage.setItem(CKEY, JSON.stringify(catalog)); }catch(e){ $('saveNote').classList.remove('hide'); } }
+const isNumTok = t => /^[\d.]+$/.test(t);
+function toks(s){
+  s = String(s||'').toLowerCase().replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/ؤ/g,'و').replace(/ئ/g,'ي');
+  s = s.replace(/([a-z])\.(?=[a-z])/g,'$1').replace(/(\d)\.(?=\d)/g,'$1_').replace(/[*×\-\/()+.,&:;]/g,' ').replace(/_/g,'.');
+  s = s.replace(/(\d)([^\d\s.])/g,'$1 $2').replace(/([^\d\s.])(\d)/g,'$1 $2');
+  return [...new Set(s.split(/\s+/).filter(t=>t&&(t.length>1||/\d/.test(t))))];
+}
+// يحدد الفئة الأنسب لاسم صنف بمقارنته بأسماء أصناف كل فئة (التشابه اللفظي + تطابق المقاس + تغطية اسم الفئة)
+function makeClassifier(){
+  const PEN = 0.65, W = 0.45, df = {}; let N = 0;
+  catalog.forEach(g=>g.i.forEach(it=>{ N++; new Set(toks(it.n).filter(t=>!isNumTok(t))).forEach(t=>df[t]=(df[t]||0)+1); }));
+  const idf = t => Math.log((N+1)/((df[t]||0)+0.5))+0.3;
+  const numF = (an,bn)=>{ const A=new Set(an),B=new Set(bn); if(!A.size||!B.size) return 1; return (A.size===B.size&&[...A].every(t=>B.has(t))) ? 1 : PEN; };
+  const sim = (a,b)=>{
+    const A = new Set(a.filter(t=>!isNumTok(t))), B = new Set(b.filter(t=>!isNumTok(t))); let i=0,u=0;
+    A.forEach(t=>{ if(B.has(t)) i+=idf(t); }); new Set([...A,...B]).forEach(t=>u+=idf(t));
+    return (u?i/u:0)*numF(a.filter(isNumTok),b.filter(isNumTok));
+  };
+  const core = catalog.map(g=>{
+    let c = toks(g.g||'').filter(t=>!isNumTok(t));
+    if(!c.length && g.i.length){ const cnt={}; g.i.forEach(it=>new Set(toks(it.n).filter(t=>!isNumTok(t))).forEach(t=>cnt[t]=(cnt[t]||0)+1)); c = Object.keys(cnt).filter(t=>cnt[t]>=Math.max(2,0.6*g.i.length)); }
+    return c; });
+  const labNums = catalog.map(g=>{
+    let lab = toks(g.g||'').filter(isNumTok);
+    if(!lab.length){ const m={}; g.i.forEach(it=>{ const k=toks(it.n).filter(isNumTok).join(','); m[k]=(m[k]||0)+1; }); const top = Object.keys(m).sort((a,b)=>m[b]-m[a])[0]||''; lab = top ? top.split(',') : []; }
+    return lab; });
+  const fn = name => {
+    const t = toks(name); let best = {s:0,gi:-1,ii:-1};
+    catalog.forEach((g,gi)=>{
+      if(!g.i.length) return;
+      const sc = g.i.map((it,ii)=>({s:sim(t,toks(it.n)),ii})).sort((a,b)=>b.s-a.s);
+      let v = (sc[0].s + (sc[1]?sc[1].s:sc[0].s*0.7))/2;
+      if(core[gi].length){ let a=0,b=0; const S=new Set(t); core[gi].forEach(x=>{ b+=idf(x); if(S.has(x)) a+=idf(x); }); v = (1-W)*v + W*(b?a/b:0)*numF(t.filter(isNumTok),labNums[gi]); }
+      if(v>best.s) best = {s:v,gi,ii:sc[0].ii};
+    });
+    return best;
+  };
+  fn.sim = (a,b) => sim(toks(a),toks(b));
+  return fn;
+}
+// هل هذا الاسم هو نفس صنف قديم بكود جديد؟ (نفس الكلمات تماماً أو يزيد/ينقص كلمة واحدة غير رقمية)
+function findRecode(name, present, used){
+  const a = new Set(toks(name)); if(a.size<3) return null; const found = [];
+  catalog.forEach((g,gi)=>{ g.i.forEach((it,ii)=>{
+    if(present.has(it.c)||used.has(it.c)) return;
+    const b = new Set(toks(it.n)), diff = [...a].filter(t=>!b.has(t)).concat([...b].filter(t=>!a.has(t)));
+    if(diff.length<=1 && !diff.some(isNumTok)) found.push({gi,ii,d:diff.length});
+  }); });
+  if(!found.length) return null;
+  const m = Math.min(...found.map(f=>f.d)), top = found.filter(f=>f.d===m);
+  return top.length===1 ? top[0] : null;     // لو أكثر من احتمال لا نخمّن
+}
+function unitNames(){ const nm = new Map(); units.forEach(u=>u.rows.forEach(([c,,n])=>{ if(!nm.has(c)) nm.set(c,n); })); return nm; }
+function clusterLabel(ms){
+  if(ms.length===1) return ms[0].n;
+  const sets = ms.map(m=>new Set(toks(m.n).filter(t=>!isNumTok(t)))), common = [...sets[0]].filter(t=>sets.every(x=>x.has(t)));
+  if(!common.length) return ms[0].n;
+  const all = ms.map(m=>new Set(toks(m.n))), keep = t => all.every(x=>x.has(t));       // يبقى الرقم فقط إذا تشاركه كل الأصناف (المقاس)
+  const UNITS = new Set(['مل','ملي','مللي','جم','كجم','لتر','ml']), words = [];
+  ms[0].n.split(/\s+/).forEach(w=>{ const tk = toks(w); if(!tk.length || !tk.every(keep)) return;
+    if(tk.every(t=>UNITS.has(t)) && !(words.length && /\d/.test(words[words.length-1]))) return; words.push(w); });
+  return words.join(' ') || ms[0].n;
+}
+// أصناف بلا فئة مناسبة: تُجمَّع مع بعضها حسب تشابه الاسم وتُنشأ لها فئة جديدة (بدل رميها في آخر الجدول)
+function createGroups(list){
+  const clf = makeClassifier(), clusters = [];
+  list.forEach(m=>{
+    const c = clusters.find(cl=>cl.some(x=>clf.sim(x.n,m.n)>=0.5));
+    if(c) c.push(m); else clusters.push([m]);
+  });
+  clusters.forEach(cl=>{
+    const near = makeClassifier()(cl[0].n), g = {g:clusterLabel(cl), autoG:true, i:cl.map(m=>({c:m.c,n:m.n,auto:'new',sc:null}))};
+    if(near.gi>=0 && near.s>=0.12) catalog.splice(near.gi+1,0,g); else catalog.push(g);
+  });
+}
+function placeNew(code,name,collect){
+  const r = makeClassifier()(name);
+  if(r.gi>=0 && r.s>=TH){ catalog[r.gi].i.splice(r.ii+1,0,{c:code,n:name,auto:'new',sc:r.s}); return; }
+  if(collect) collect.push({c:code,n:name}); else createGroups([{c:code,n:name}]);
+}
+function tidyCat(){ catalog = catalog.filter(g=>g.i.length); }
+function syncCatalog(){
+  const present = new Set(); units.forEach(u=>u.rows.forEach(r=>present.add(r[0])));
+  const known = () => new Set(catalog.flatMap(g=>g.i.map(i=>i.c)));
+  const nm = unitNames(), used = new Set(), left = [], bal = new Map(); let changed = 0;
+  units.forEach(u=>u.rows.forEach(([c,q])=>bal.set(c,(bal.get(c)||0)+Math.abs(q))));
+  const service = n => /لاغ|ضريب|خصم|خصومات|عمول/.test(n);       // بنود محاسبية وليست أصناف مخزون
+  [...nm.keys()].filter(c=>!known().has(c)).sort((a,b)=>a-b).forEach(c=>{
+    const rc = findRecode(nm.get(c), present, used);
+    if(rc){ const it = catalog[rc.gi].i[rc.ii]; used.add(it.c); it.old = it.c; it.c = c; it.auto = 'recode'; changed++; }
+    else if(!service(nm.get(c)) && bal.get(c) >= 0.005){ placeNew(c, nm.get(c), left); changed++; }   // صنف جديد عليه رصيد فقط
+  });
+  if(left.length) createGroups(left);
+  tidyCat(); if(changed) chOpen = true; return changed;
+}
+const glabel = g => (g.g || ('مجموعة: '+(g.i[0]?g.i[0].n:''))).slice(0,70);
+function findItem(code){ for(let gi=0;gi<catalog.length;gi++){ const ii = catalog[gi].i.findIndex(x=>x.c===code); if(ii>=0) return {gi,ii,it:catalog[gi].i[ii]}; } return null; }
+function afterChange(){ tidyCat(); saveCat(); render(); }
+function moveItem(code,gi){ const f = findItem(code); if(!f || !catalog[gi] || f.gi===gi) return; const [it] = catalog[f.gi].i.splice(f.ii,1); it.sc = null; catalog[gi].i.push(it); afterChange(); }
+function revertRecode(code){ const f = findItem(code); if(!f || f.it.auto!=='recode') return; const it = f.it; it.c = it.old; delete it.old; delete it.auto; placeNew(code, unitNames().get(code)||it.n); chOpen = true; afterChange(); }
+function approveAll(){ catalog.forEach(g=>{ delete g.autoG; g.i.forEach(it=>{ delete it.auto; delete it.old; delete it.sc; }); }); chOpen = false; afterChange(); }
+function resetCatalog(){ if(!confirm('إعادة قائمة الأصناف إلى القالب الأصلي؟ ستُضاف الأصناف الجديدة من التقارير مرة أخرى تلقائياً.')) return; catalog = freshCatalog(); syncCatalog(); afterChange(); }
 let units = [];      // [{id,name,file,at,rows:[[code,qty,name]],total}]
 let storageOK = true;
 
@@ -155,11 +264,8 @@ function agg(u,mode){ // code -> raw qty (بدون تقريب)
 function compute(all){
   const o = opts(), maps = units.map(u=>agg(u,o.dup));
   const val = (ui,c) => rnd(maps[ui].get(c)||0, o);
-  const names = new Map(); units.forEach(u=>u.rows.forEach(([c,,n])=>{ if(!names.has(c)) names.set(c,n); }));
-  const mk = (code,name,unlisted) => { const v = units.map((_,i)=>val(i,code)); return {code,name,v,t:v.reduce((a,b)=>a+b,0),unlisted}; };
-  const groups = TPL.map((b,k)=>({g:b.g||'مجموع المجموعة', items:b.i.map(([c,n])=>mk(c,n,false))}));
-  const extra = [...names.keys()].filter(c=>!TPLCODES.has(c)).sort((a,b)=>a-b).map(c=>mk(c,names.get(c),true)).filter(r=>all || r.v.some(x=>x!==0) || !$('hideZero').checked);
-  if(extra.length) groups.push({g:'أصناف غير مدرجة في القالب', items:extra, extra:true});
+  const mk = (code,name,auto) => { const v = units.map((_,i)=>val(i,code)); return {code,name,v,t:v.reduce((a,b)=>a+b,0),auto}; };
+  const groups = catalog.map(b=>({g:b.g||'مجموع المجموعة', items:b.i.map(it=>mk(it.c,it.n,!!it.auto))}));
   groups.forEach(g=>{ g.v = units.map((_,i)=>g.items.reduce((s,r)=>s+r.v[i],0)); g.t = g.v.reduce((a,b)=>a+b,0); });
   const grand = units.map((_,i)=>groups.reduce((s,g)=>s+g.v[i],0));
   return {o,maps,groups,grand,gt:grand.reduce((a,b)=>a+b,0)};
@@ -200,7 +306,7 @@ function render(){
   $('th').innerHTML = `<tr><th class="s1" style="min-width:90px">الكود</th><th>الصنف</th>${units.map(u=>`<th>${esc(u.name)}</th>`).join('')}<th>اجمالي الرصيد</th></tr>`;
   let h = '';
   vis.forEach(g=>{
-    g.rows.forEach(r=>{ h += `<tr class="${r.unlisted?'u':''}"><td class="s1">${r.code}</td><td class="nm">${esc(r.name)}</td>${r.v.map(cell).join('')}<td class="t ${r.t<0?'neg':r.t===0?'z':''}">${fmt(r.t)}</td></tr>`; });
+    g.rows.forEach(r=>{ h += `<tr class="${r.auto?'u':''}"><td class="s1">${r.code}</td><td class="nm">${esc(r.name)}</td>${r.v.map(cell).join('')}<td class="t ${r.t<0?'neg':r.t===0?'z':''}">${fmt(r.t)}</td></tr>`; });
     h += `<tr class="g"><td class="s1"></td><td class="nm">${esc(g.g)}</td>${g.v.map(cell).join('')}<td class="t">${fmt(g.t)}</td></tr>`;
   });
   if(!vis.length) h = `<tr><td colspan="${n+3}" class="empty">لا توجد نتائج</td></tr>`;
@@ -208,17 +314,25 @@ function render(){
   $('tb').innerHTML = h;
 
   const withBal = C.groups.reduce((s,g)=>s+g.items.filter(r=>r.v.some(x=>x!==0)).length,0);
-  const un = C.groups.find(g=>g.extra), unBal = un ? un.items.filter(r=>r.v.some(x=>x!==0)) : [];
+  const autos = []; catalog.forEach((g,gi)=>g.i.forEach(it=>{ if(it.auto) autos.push({gi,it}); }));
+  const nNew = autos.filter(a=>a.it.auto==='new').length, nRec = autos.length-nNew;
   $('stats').innerHTML = `
     <div class="card stat"><small>عدد الوحدات</small><strong>${n}</strong></div>
     <div class="card stat"><small>أصناف لها رصيد</small><strong>${withBal}</strong></div>
     <div class="card stat"><small>إجمالي الكراتين</small><strong>${C.gt.toLocaleString('en-US',{maximumFractionDigits:0})}</strong></div>
-    <div class="card stat"><small>أصناف خارج القالب</small><strong>${unBal.length}</strong></div>`;
+    <div class="card stat"><small>تحديثات القائمة</small><strong>${autos.length}</strong></div>`;
 
   // التحذيرات
   let w = '';
-  if(unBal.length) w += `<details class="note"><summary>${unBal.length} صنف له رصيد وغير موجود في القالب (إجمالي ${unBal.reduce((s,r)=>s+r.t,0).toLocaleString('en-US',{maximumFractionDigits:0})} كرتونة)</summary>
-    تمت إضافتهم في آخر الجدول تحت «أصناف غير مدرجة في القالب» وداخلون في الإجمالي العام، حتى لا يضيع رصيدهم. (مُعلَّمون بنقطة ●)</details>`;
+  if(autos.length){
+    const opts = sel => catalog.map((g,gi)=>`<option value="${gi}" ${gi===sel?'selected':''}>${esc(glabel(g))}</option>`).join('');
+    w += `<details class="note" id="chg" ${chOpen?'open':''}><summary>حدّث النظام قائمة الأصناف من التقارير: ${nNew?nNew+' صنف جديد':''}${nNew&&nRec?' · ':''}${nRec?nRec+' تغيير كود':''}</summary>
+      <div style="margin:6px 0">كل صنف جديد وُضع في الفئة الأقرب لاسمه، وتغيير الكود حُدِّث في مكانه. راجعها وغيّر الفئة إذا لزم، ثم اضغط «اعتماد». (الأصناف المحدَّثة مُعلَّمة بنقطة ● في الجدول)</div>
+      <ul>${autos.map(({gi,it})=> it.auto==='recode'
+        ? `<li>تغيّر كود <b>${esc(it.n)}</b> من ${it.old} إلى <b>${it.c}</b> <button class="btn ghost sm" data-rv="${it.c}">تراجع</button></li>`
+        : `<li><b>${it.c}</b> ${esc(it.n)} ← <select data-mv="${it.c}">${opts(gi)}</select>${it.sc!=null?` <small>(تطابق ${Math.round(it.sc*100)}%)</small>`:(catalog[gi].autoG?' <small>(فئة جديدة أُنشئت له — يمكنك نقله)</small>':'')}</li>`).join('')}</ul>
+      <div class="row" style="margin-top:8px"><button class="btn sm" data-ok="1">اعتماد الكل</button></div></details>`;
+  }
   const dups = [];
   units.forEach(u=>{ const by = {}; u.rows.forEach(([c,q,nm])=>{ (by[c] = by[c]||{nm,q:[]}).q.push(q); }); Object.entries(by).forEach(([c,d])=>{ if(d.q.length>1) dups.push({u:u.name,c,nm:d.nm,q:d.q}); }); });
   if(dups.length) w += `<details class="note"><summary>${dups.length} كود مكرر داخل التقارير — الوضع الحالي: ${C.o.dup==='sum'?'جمع الكميات':'أول قيمة فقط'}</summary><ul>${dups.map(d=>`<li>${esc(d.u)} — ${esc(d.nm)} (${d.c}): ${d.q.map(x=>x.toLocaleString('en-US',{maximumFractionDigits:2})).join(' ، ')}</li>`).join('')}</ul>
@@ -239,14 +353,14 @@ async function handleFiles(files){
   if(bad.length) showErr(bad.join(' | '));
   if(!ok.length) return;
   if(replaceId){ const u = units.find(x=>x.id===replaceId); replaceId=null;
-    if(u){ Object.assign(u,{file:ok[0].file,at:Date.now(),rows:ok[0].rows,total:ok[0].total}); save(); render(); } return; }
+    if(u){ Object.assign(u,{file:ok[0].file,at:Date.now(),rows:ok[0].rows,total:ok[0].total}); syncCatalog(); saveCat(); save(); render(); } return; }
   pending = ok; $('pend').innerHTML = ok.map((p,i)=>`<div><label>${esc(p.file)} — ${p.rows.length} صنف</label><input data-p="${i}" value="${esc(baseName(p.file))}" maxlength="60"></div>`).join('');
   $('dlg').showModal(); $('pend').querySelector('input').select();
 }
 function confirmAdd(){
   $('pend').querySelectorAll('input').forEach(inp=>{ const p = pending[+inp.dataset.p];
     units.push({id:uid(), name:inp.value.trim()||baseName(p.file), file:p.file, at:Date.now(), rows:p.rows, total:p.total}); });
-  pending=[]; $('dlg').close(); save(); render();
+  pending=[]; $('dlg').close(); syncCatalog(); saveCat(); save(); render();
 }
 const drop=$('drop'), fi=$('file');
 drop.onclick=()=>{ replaceId=null; fi.click(); }; drop.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); replaceId=null; fi.click(); } };
@@ -266,6 +380,10 @@ $('units').addEventListener('change',e=>{ if(e.target.matches('input[data-id]'))
 $('q').addEventListener('input',render);
 ['hideZero','dupMode','roundInt'].forEach(i=>$(i).addEventListener('change',render));
 $('print').onclick=()=>window.print();
+$('warns').addEventListener('change',e=>{ const sel = e.target.closest('select[data-mv]'); if(sel) moveItem(sel.dataset.mv,+sel.value); });
+$('warns').addEventListener('click',e=>{ const b = e.target.closest('button'); if(!b) return; if(b.dataset.rv) revertRecode(b.dataset.rv); else if(b.dataset.ok) approveAll(); });
+$('warns').addEventListener('toggle',e=>{ if(e.target.id==='chg') chOpen = e.target.open; },true);
+$('resetCat').onclick=resetCatalog;
 
 /* ---------- تصدير Excel: شيت رئيسي + شيت لكل وحدة، والرئيسي مربوط بالوحدات بمعادلات ---------- */
 const colL = n => { let s=''; n++; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26);} return s; }; // 0 => A
@@ -361,7 +479,7 @@ async function exportXlsx(){
 }
 $('export').onclick = async ()=>{ try{ await exportXlsx(); }catch(e){ showErr(e.message); } };
 
-restore(); render();
+restore(); loadCat(); if(units.length){ syncCatalog(); chOpen = false; saveCat(); } render();
 </script>
 </body>
 </html>

@@ -50,7 +50,7 @@ th.s1,td.s1{position:sticky;right:0;z-index:2}th.s1{z-index:4}
 td.z{color:var(--mute);opacity:.45}td.neg{color:var(--bad);font-weight:700}td.t{font-weight:700;background:var(--tot)}
 tr.g td{background:var(--grp);font-weight:700;border-top:1px solid var(--brand)}tr.g td.t{background:var(--grp)}
 tr.u td.nm::after{content:" ●";color:var(--warnb);font-size:11px}
-tr.u.ug td{background:var(--warn)}
+tr.u.ug td{background:var(--warn)}tr.sec td{background:var(--brand);color:#fff;border-top:2px solid var(--brand2)}tr.sec td.t{background:var(--brand)}tr.sec td.z{color:#fff;opacity:.6}
 tr.gt td{background:var(--brand);color:#fff;font-weight:700;border-top:2px solid var(--brand2);position:sticky;bottom:0;z-index:2}
 tr:not(.g):not(.gt):hover td{filter:brightness(.97)}
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:18px;width:min(520px,94vw)}
@@ -84,6 +84,7 @@ dialog h3{margin:0 0 4px}dialog p{margin:0 0 12px;color:var(--mute);font-size:13
 <label>عند تكرار الكود:
 <select id="dupMode"><option value="sum">جمع الكميات</option><option value="first">أول قيمة فقط (مثل VLOOKUP)</option></select></label>
 <label><input type="checkbox" id="roundInt"> تقريب الكسور لأقرب كرتونة</label>
+<label title="يجمع كل أصناف الجل في قسم واحد في آخر الجدول والتصدير، ويرتب المقاسات من الأصغر للأكبر"><input type="checkbox" id="gelSort" checked> تجميع منتجات الجل وترتيب المقاسات</label>
 </div>
 <div class="tools noprint"><input type="text" id="title" value="رصيد مخازن وحدات الشرقيه و دمياط" aria-label="عنوان التقرير (للتصدير)"><span class="sp"></span>
 <button class="btn ghost" id="resetCat" title="إرجاع قائمة الأصناف للقالب الأصلي">إعادة ضبط القائمة</button>
@@ -165,6 +166,41 @@ function findRecode(name, present, used){
   if(!found.length) return null;
   const m = Math.min(...found.map(f=>f.d)), top = found.filter(f=>f.d===m);
   return top.length===1 ? top[0] : null;     // لو أكثر من احتمال لا نخمّن
+}
+
+/* ---------- تجميع منتجات الجل وترتيب المقاسات ---------- */
+const GEL_LABEL = 'إجمالي منتجات الجل';
+const isGel = n => toks(n).some(t => t==='gel' || /^(?:شاور)?(?:جل|جيل)$/.test(t));
+// وزن/حجم الصنف بالجرام/المللي (كجم ولتر ×1000). الجمع عند وجود أكثر من قيمة مثل "4 كجم + 500جم". بدون مقاس => آخر الترتيب
+function sizeOf(name){
+  const t = String(name||'').toLowerCase().replace(/ى/g,'ي').replace(/[أإآ]/g,'ا').replace(/(\d)\s*,\s*(\d)/g,'$1.$2');
+  const re = /(\d+(?:\.\d+)?)\s*(كجم|كيلو|مللي|ملي|مل|جرام|جم|لتر|kg|ml|g)(?![\u0621-\u064Aa-z])/g; let m, sum = 0, any = false;
+  while((m = re.exec(t))){ any = true; const u = m[2]; sum += parseFloat(m[1]) * ((u==='كجم'||u==='كيلو'||u==='kg'||u==='لتر') ? 1000 : 1); }
+  return any ? sum : Infinity;
+}
+// عائلة المنتج = أول كلمة عربية في اسم الفئة (باهي، اوكسي، دوش، ريفولي ...)
+function familyOf(text){
+  const t = String(text||'').toLowerCase().replace(/ى/g,'ي').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/[a-z]+(?=[\u0621-\u064A])/g,' ');
+  const w = t.split(/[^\u0621-\u064A]+/).filter(x=>x.length>1 && !['مجموع','المجموعه','جل','جيل'].includes(x));
+  return w[0] || '';
+}
+function arrangeGel(groups){
+  const gelG = [], rest = [];
+  groups.forEach((g,idx)=>{
+    const gi = g.items.filter(i=>isGel(i.name)), ng = g.items.filter(i=>!isGel(i.name));
+    if(!gi.length){ rest.push(g); return; }
+    if(ng.length) rest.push({...g, items:ng});          // فئة مخلوطة: يبقى غير الجل مكانه ويخرج الجل
+    const by = new Map(); gi.forEach(i=>{ const k = sizeOf(i.name); if(!by.has(k)) by.set(k,[]); by.get(k).push(i); });
+    if(!ng.length && by.size===1) gelG.push({...g, gel:true, ord:idx, fam:familyOf(g.raw||g.items[0].name)});   // فئة جل كاملة بمقاس واحد: تبقى كما هي
+    else by.forEach(its=>gelG.push({g:clusterLabel(its.map(i=>({n:i.name}))), raw:'', items:its, gel:true, ord:idx, fam:familyOf((g.raw||'')+' '+its[0].name)}));   // متعددة المقاسات: تُقسَّم حسب المقاس
+  });
+  gelG.forEach(g=>{
+    g.items = g.items.map((it,k)=>({it,k,z:sizeOf(it.name)})).sort((a,b)=>a.z-b.z||a.k-b.k).map(x=>x.it);
+    const lz = sizeOf(g.raw); g.z = isFinite(lz) ? lz : Math.min(...g.items.map(i=>sizeOf(i.name)));
+  });
+  const rank = new Map(); gelG.slice().sort((a,b)=>a.ord-b.ord).forEach(g=>{ if(!rank.has(g.fam)) rank.set(g.fam, rank.size); });
+  gelG.sort((a,b)=>rank.get(a.fam)-rank.get(b.fam) || a.z-b.z || a.ord-b.ord);
+  return rest.concat(gelG);
 }
 function unitNames(){ const nm = new Map(); units.forEach(u=>u.rows.forEach(([c,,n])=>{ if(!nm.has(c)) nm.set(c,n); })); return nm; }
 function clusterLabel(ms){
@@ -265,10 +301,12 @@ function compute(all){
   const o = opts(), maps = units.map(u=>agg(u,o.dup));
   const val = (ui,c) => rnd(maps[ui].get(c)||0, o);
   const mk = (code,name,auto) => { const v = units.map((_,i)=>val(i,code)); return {code,name,v,t:v.reduce((a,b)=>a+b,0),auto}; };
-  const groups = catalog.map(b=>({g:b.g||'مجموع المجموعة', items:b.i.map(it=>mk(it.c,it.n,!!it.auto))}));
+  let groups = catalog.map(b=>({g:b.g||'مجموع المجموعة', raw:b.g||'', items:b.i.map(it=>mk(it.c,it.n,!!it.auto))}));
+  if($('gelSort').checked) groups = arrangeGel(groups);
   groups.forEach(g=>{ g.v = units.map((_,i)=>g.items.reduce((s,r)=>s+r.v[i],0)); g.t = g.v.reduce((a,b)=>a+b,0); });
   const grand = units.map((_,i)=>groups.reduce((s,g)=>s+g.v[i],0));
-  return {o,maps,groups,grand,gt:grand.reduce((a,b)=>a+b,0)};
+  const gg = groups.filter(g=>g.gel), gelSec = gg.length ? (()=>{ const v = units.map((_,i)=>gg.reduce((s,g)=>s+g.v[i],0)); return {v,t:v.reduce((a,b)=>a+b,0)}; })() : null;
+  return {o,maps,groups,grand,gt:grand.reduce((a,b)=>a+b,0),gelSec};
 }
 function visible(C){
   const hz = $('hideZero').checked, q = $('q').value.trim().toLowerCase();
@@ -305,9 +343,11 @@ function render(){
   const C = compute(), vis = visible(C), n = units.length;
   $('th').innerHTML = `<tr><th class="s1" style="min-width:90px">الكود</th><th>الصنف</th>${units.map(u=>`<th>${esc(u.name)}</th>`).join('')}<th>اجمالي الرصيد</th></tr>`;
   let h = '';
-  vis.forEach(g=>{
+  const lastGel = vis.reduce((m,g,k)=>g.gel?k:m,-1);
+  vis.forEach((g,k)=>{
     g.rows.forEach(r=>{ h += `<tr class="${r.auto?'u':''}"><td class="s1">${r.code}</td><td class="nm">${esc(r.name)}</td>${r.v.map(cell).join('')}<td class="t ${r.t<0?'neg':r.t===0?'z':''}">${fmt(r.t)}</td></tr>`; });
     h += `<tr class="g"><td class="s1"></td><td class="nm">${esc(g.g)}</td>${g.v.map(cell).join('')}<td class="t">${fmt(g.t)}</td></tr>`;
+    if(k===lastGel && C.gelSec) h += `<tr class="g sec"><td class="s1"></td><td class="nm">${GEL_LABEL}</td>${C.gelSec.v.map(cell).join('')}<td class="t">${fmt(C.gelSec.t)}</td></tr>`;
   });
   if(!vis.length) h = `<tr><td colspan="${n+3}" class="empty">لا توجد نتائج</td></tr>`;
   else h += `<tr class="gt"><td class="s1"></td><td class="nm">الإجمالي العام</td>${C.grand.map(v=>`<td>${fmt(v)}</td>`).join('')}<td>${fmt(C.gt)}</td></tr>`;
@@ -378,7 +418,7 @@ $('units').addEventListener('click',e=>{
 });
 $('units').addEventListener('change',e=>{ if(e.target.matches('input[data-id]')){ const u=units.find(x=>x.id===e.target.dataset.id); if(u){ u.name=e.target.value.trim()||u.name; save(); render(); } } });
 $('q').addEventListener('input',render);
-['hideZero','dupMode','roundInt'].forEach(i=>$(i).addEventListener('change',render));
+['hideZero','dupMode','roundInt','gelSort'].forEach(i=>$(i).addEventListener('change',render));
 $('print').onclick=()=>window.print();
 $('warns').addEventListener('change',e=>{ const sel = e.target.closest('select[data-mv]'); if(sel) moveItem(sel.dataset.mv,+sel.value); });
 $('warns').addEventListener('click',e=>{ const b = e.target.closest('button'); if(!b) return; if(b.dataset.rv) revertRecode(b.dataset.rv); else if(b.dataset.ok) approveAll(); });
@@ -401,10 +441,11 @@ function sheetNames(){
 function buildModel(C){
   const n = units.length, names = sheetNames(), q = s => "'"+s.replace(/'/g,"''")+"'";
   const lastU = colL(1+n);                       // آخر عمود وحدة
-  const rows = []; let r = 3;
-  C.groups.forEach(g=>{
+  const rows = []; let r = 3, gelFirst = 0;
+  const lastGelIdx = C.groups.reduce((m,g,k)=>g.gel&&g.items.length?k:m,-1);
+  C.groups.forEach((g,gk)=>{
     if(!g.items.length) return;
-    const first = r;
+    const first = r; if(g.gel && !gelFirst) gelFirst = r;
     g.items.forEach(it=>{
       const cells = [{v:String(it.code)},{v:it.name}];
       units.forEach((_,i)=>{
@@ -419,6 +460,11 @@ function buildModel(C){
     const last = r-1, cells = [{v:null},{v:g.g}];
     [...g.v, g.t].forEach((val,i)=>cells.push({f:`SUBTOTAL(9,${colL(2+i)}${first}:${colL(2+i)}${last})`, r:val}));
     rows.push({kind:'group', cells}); r++;
+    if(gk===lastGelIdx && C.gelSec){
+      const sc = [{v:null},{v:GEL_LABEL}];
+      [...C.gelSec.v, C.gelSec.t].forEach((val,i)=>sc.push({f:`SUBTOTAL(9,${colL(2+i)}${gelFirst}:${colL(2+i)}${r-1})`, r:val}));
+      rows.push({kind:'group', cells:sc}); r++;
+    }
   });
   const lastRow = r-1, cells = [{v:null},{v:'الإجمالي العام'}];
   [...C.grand, C.gt].forEach((val,i)=>cells.push({f:`SUBTOTAL(9,${colL(2+i)}3:${colL(2+i)}${lastRow})`, r:val}));
